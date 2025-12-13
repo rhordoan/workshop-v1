@@ -19,13 +19,16 @@ set -euo pipefail
 #   ./scripts/start_nims.sh
 #
 # Optional overrides:
-#   export NIM_EMBED_IMAGE="nvcr.io/nim/nvidia/llm-nim:latest"
-#   export NIM_RERANK_IMAGE="nvcr.io/nim/nvidia/llm-nim:latest"
+#   export NIM_EMBED_IMAGE="nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1"
+#   export NIM_RERANK_IMAGE="nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2"
 #   export NIM_GEN_IMAGE="nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest"
-#   export NIM_EMBED_MODEL="nvidia/llama-3.1-nemotron-embedding"
-#   export NIM_RERANK_MODEL="nvidia/llama-3.1-nemotron-rerank"
+#   export NIM_EMBED_MODEL="nvidia/nv-embedqa-mistral-7b-v2"
+#   export NIM_RERANK_MODEL="nvidia/nv-rerankqa-mistral-4b-v3"
 #   export NIM_GEN_MODEL="qwen/qwen-2.5-7b-instruct"
 #   export NIM_CACHE_DIR="$HOME/.cache/nim"
+#   export START_EMBED=1
+#   export START_RERANK=1
+#   export START_GEN=0
 #
 # Notes:
 # - Image names/tags vary by NIM release. If pulls fail, look up the exact
@@ -48,13 +51,20 @@ EOF
   exit 1
 fi
 
-NIM_EMBED_IMAGE="${NIM_EMBED_IMAGE:-nvcr.io/nim/nvidia/llm-nim:latest}"
-NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/llama-3.2-nemoretriever-500m-rerank-v2:1.8}"
+NIM_EMBED_IMAGE="${NIM_EMBED_IMAGE:-nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1}"
+NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2}"
 NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest}"
 
-NIM_EMBED_MODEL="${NIM_EMBED_MODEL:-nvidia/llama-3.1-nemotron-embedding}"
-NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}"
+NIM_EMBED_MODEL="${NIM_EMBED_MODEL:-nvidia/nv-embedqa-mistral-7b-v2}"
+NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/nv-rerankqa-mistral-4b-v3}"
 NIM_GEN_MODEL="${NIM_GEN_MODEL:-qwen/qwen-2.5-7b-instruct}"
+
+START_EMBED="${START_EMBED:-1}"
+START_RERANK="${START_RERANK:-1}"
+# IMPORTANT: Most workshop VMs (even A100 80GB) cannot co-run a heavy chat NIM plus
+# the embedding + rerank NIMs with TensorRT profiles simultaneously without OOM.
+# Start chat separately when needed.
+START_GEN="${START_GEN:-0}"
 
 NIM_CACHE_DIR="${NIM_CACHE_DIR:-$HOME/.cache/nim}"
 mkdir -p "${NIM_CACHE_DIR}"
@@ -86,9 +96,9 @@ stop_if_running "${RERANK_NAME}"
 stop_if_running "${GEN_NAME}"
 
 echo "==> Pull images"
-docker pull "${NIM_EMBED_IMAGE}"
-docker pull "${NIM_RERANK_IMAGE}"
-docker pull "${NIM_GEN_IMAGE}"
+if [[ "${START_EMBED}" == "1" ]]; then docker pull "${NIM_EMBED_IMAGE}"; fi
+if [[ "${START_RERANK}" == "1" ]]; then docker pull "${NIM_RERANK_IMAGE}"; fi
+if [[ "${START_GEN}" == "1" ]]; then docker pull "${NIM_GEN_IMAGE}"; fi
 
 COMMON_ENV=(
   # Some NIM images require one of these to accept terms non-interactively.
@@ -108,34 +118,46 @@ COMMON_RUN=(
   -v "${NIM_CACHE_DIR}:/opt/nim/.cache"
 )
 
-echo "==> Start embedding NIM (${EMBED_NAME})"
-docker run "${COMMON_RUN[@]}" --name "${EMBED_NAME}" \
-  "${COMMON_ENV[@]}" \
-  -e "NIM_MODEL_NAME=${NIM_EMBED_MODEL}" \
-  -e "NIM_MODEL=${NIM_EMBED_MODEL}" \
-  -e "MODEL_NAME=${NIM_EMBED_MODEL}" \
-  "${NIM_EMBED_IMAGE}" >/dev/null
+if [[ "${START_EMBED}" == "1" ]]; then
+  echo "==> Start embedding NIM (${EMBED_NAME})"
+  docker run "${COMMON_RUN[@]}" --name "${EMBED_NAME}" \
+    "${COMMON_ENV[@]}" \
+    -e "NIM_MODEL_NAME=${NIM_EMBED_MODEL}" \
+    -e "NIM_MODEL=${NIM_EMBED_MODEL}" \
+    -e "MODEL_NAME=${NIM_EMBED_MODEL}" \
+    "${NIM_EMBED_IMAGE}" >/dev/null
+else
+  echo "==> Skipping embedding NIM (START_EMBED!=1)"
+fi
 
-echo "==> Start rerank NIM (${RERANK_NAME})"
-docker run "${COMMON_RUN[@]}" --name "${RERANK_NAME}" \
-  "${COMMON_ENV[@]}" \
-  -e "NIM_MODEL_NAME=${NIM_RERANK_MODEL}" \
-  -e "NIM_MODEL=${NIM_RERANK_MODEL}" \
-  -e "MODEL_NAME=${NIM_RERANK_MODEL}" \
-  "${NIM_RERANK_IMAGE}" >/dev/null
+if [[ "${START_RERANK}" == "1" ]]; then
+  echo "==> Start rerank NIM (${RERANK_NAME})"
+  docker run "${COMMON_RUN[@]}" --name "${RERANK_NAME}" \
+    "${COMMON_ENV[@]}" \
+    -e "NIM_MODEL_NAME=${NIM_RERANK_MODEL}" \
+    -e "NIM_MODEL=${NIM_RERANK_MODEL}" \
+    -e "MODEL_NAME=${NIM_RERANK_MODEL}" \
+    "${NIM_RERANK_IMAGE}" >/dev/null
+else
+  echo "==> Skipping rerank NIM (START_RERANK!=1)"
+fi
 
-echo "==> Start generation/chat NIM (${GEN_NAME})"
-docker run "${COMMON_RUN[@]}" --name "${GEN_NAME}" \
-  "${COMMON_ENV[@]}" \
-  -e "NIM_MODEL_NAME=${NIM_GEN_MODEL}" \
-  -e "NIM_MODEL=${NIM_GEN_MODEL}" \
-  -e "MODEL_NAME=${NIM_GEN_MODEL}" \
-  "${NIM_GEN_IMAGE}" >/dev/null
+if [[ "${START_GEN}" == "1" ]]; then
+  echo "==> Start generation/chat NIM (${GEN_NAME})"
+  docker run "${COMMON_RUN[@]}" --name "${GEN_NAME}" \
+    "${COMMON_ENV[@]}" \
+    -e "NIM_MODEL_NAME=${NIM_GEN_MODEL}" \
+    -e "NIM_MODEL=${NIM_GEN_MODEL}" \
+    -e "MODEL_NAME=${NIM_GEN_MODEL}" \
+    "${NIM_GEN_IMAGE}" >/dev/null
+else
+  echo "==> Skipping generation/chat NIM (START_GEN!=1)"
+fi
 
 echo "==> Write nginx gateway config"
 GATEWAY_CONF_DIR="${NIM_CACHE_DIR}/gateway"
 mkdir -p "${GATEWAY_CONF_DIR}"
-cat > "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX'
+cat > "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_HEAD'
 worker_processes  1;
 events { worker_connections 1024; }
 
@@ -171,19 +193,37 @@ http {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
+NGINX_HEAD
+
+if [[ "${START_GEN}" == "1" ]]; then
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_CHAT'
     # Chat
     location /v1/chat/completions {
       proxy_pass http://nim-gen:8000;
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
+NGINX_CHAT
+else
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_CHAT_OFF'
+    # Chat
+    #
+    # NOTE: Do not reference an upstream that doesn't exist in docker DNS. If
+    # nim-gen isn't started, nginx would fail to boot.
+    location /v1/chat/completions {
+      return 503;
+    }
+NGINX_CHAT_OFF
+fi
+
+cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_TAIL'
 
     location / {
       return 404;
     }
   }
 }
-NGINX
+NGINX_TAIL
 
 echo "==> Start nginx gateway on localhost:8000"
 docker run --detach --restart unless-stopped --name "${GATEWAY_NAME}" \
