@@ -22,8 +22,9 @@ cd fico
 ```
 
 Open the notebooks:
-- `module_b_vector_ops_rbac.ipynb`
-- `module_c_rag_arch_latency_profiler.ipynb`
+- `day2_01_module_b_vector_math_rbac.ipynb`
+- `day2_02_module_c_rag_arch_latency_profiler.ipynb`
+- `day3_02_inference_physics_nim.ipynb`
 
 ## NIM mode (optional)
 

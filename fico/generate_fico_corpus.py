@@ -426,7 +426,7 @@ def _write_json(path: str, obj: object) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Generate a synthetic FICO-ish corpus on GPU (A100) and embed it for module_b_vector_ops_rbac.ipynb."
+        description="Generate a synthetic FICO-ish corpus on GPU (A100) and embed it for day2_01_module_b_vector_math_rbac.ipynb."
     )
     parser.add_argument(
         "--out",

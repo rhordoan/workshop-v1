@@ -3,12 +3,12 @@ from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 from pathlib import Path
 
 
-def create_sample_notebook(path: str = "sample_notebook.ipynb") -> Path:
+def create_sample_notebook(path: str = "00_scratchpad.ipynb") -> Path:
     """
     Create a simple Jupyter notebook with a couple of example cells.
 
     Run this script (python test.py) and then open the generated
-    sample_notebook.ipynb file in Jupyter / VS Code / Cursor.
+    00_scratchpad.ipynb file in Jupyter / VS Code / Cursor.
     """
     nb = new_notebook(
         cells=[

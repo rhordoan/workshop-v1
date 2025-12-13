@@ -1,4 +1,4 @@
-## NIM deployment (for `module_c_rag_arch_latency_profiler.ipynb`)
+## NIM deployment (for `day2_02_module_c_rag_arch_latency_profiler.ipynb`)
 
 The notebook's `NIMClient` expects these endpoints on a single base URL:
 
