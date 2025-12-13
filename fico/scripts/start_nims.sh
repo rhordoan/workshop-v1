@@ -94,6 +94,10 @@ COMMON_ENV=(
   # Some NIM images require one of these to accept terms non-interactively.
   -e "ACCEPT_EULA=Y"
   -e "NIM_ACCEPT_EULA=Y"
+  # NIM pulls model artifacts/profiles from NGC at runtime; it needs an API key inside the container.
+  -e "NGC_API_KEY=${NGC_API_KEY}"
+  # Some NIM builds/tools look for this name instead.
+  -e "NGC_CLI_API_KEY=${NGC_API_KEY}"
 )
 
 COMMON_RUN=(
