@@ -29,3 +29,8 @@ langchain-community>=0.2
 nemoguardrails>=0.10
 websockets>=12.0
 uvicorn>=0.30
+
+# Module E: Quantization Lab
+bitsandbytes>=0.43
+auto-gptq>=0.7
+optimum>=1.17

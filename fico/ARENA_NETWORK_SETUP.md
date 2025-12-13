@@ -383,3 +383,4 @@ ngrok tcp 8765
 3. **Screen Sharing**: Project scoreboard on shared screen
 4. **Communication**: Use Slack/Teams for team coordination
 5. **Timeboxing**: 2 minutes per round keeps energy high
+

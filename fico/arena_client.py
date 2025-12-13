@@ -169,3 +169,4 @@ def start_client_background(client: ArenaClient):
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
     return thread
+

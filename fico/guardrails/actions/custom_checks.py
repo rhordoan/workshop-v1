@@ -435,3 +435,4 @@ def get_current_rules() -> dict:
         "pii_patterns": list(PII_PATTERNS.keys()),
         "injection_patterns_count": len(INJECTION_PATTERNS),
     }
+
