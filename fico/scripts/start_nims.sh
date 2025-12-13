@@ -21,10 +21,10 @@ set -euo pipefail
 # Optional overrides:
 #   export NIM_EMBED_IMAGE="nvcr.io/nim/nvidia/llm-nim:latest"
 #   export NIM_RERANK_IMAGE="nvcr.io/nim/nvidia/llm-nim:latest"
-#   export NIM_GEN_IMAGE="nvcr.io/nim/nvidia/llm-nim:latest"
+#   export NIM_GEN_IMAGE="nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest"
 #   export NIM_EMBED_MODEL="nvidia/llama-3.1-nemotron-embedding"
 #   export NIM_RERANK_MODEL="nvidia/llama-3.1-nemotron-rerank"
-#   export NIM_GEN_MODEL="meta/llama-3.1-8b-instruct"
+#   export NIM_GEN_MODEL="qwen/qwen-2.5-7b-instruct"
 #   export NIM_CACHE_DIR="$HOME/.cache/nim"
 #
 # Notes:
@@ -49,12 +49,12 @@ EOF
 fi
 
 NIM_EMBED_IMAGE="${NIM_EMBED_IMAGE:-nvcr.io/nim/nvidia/llm-nim:latest}"
-NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/llm-nim:latest}"
-NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/nvidia/llm-nim:latest}"
+NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/llama-3.2-nemoretriever-500m-rerank-v2:1.8}"
+NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest}"
 
 NIM_EMBED_MODEL="${NIM_EMBED_MODEL:-nvidia/llama-3.1-nemotron-embedding}"
-NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/llama-3.1-nemotron-rerank}"
-NIM_GEN_MODEL="${NIM_GEN_MODEL:-meta/llama-3.1-8b-instruct}"
+NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/llama-3.2-nemoretriever-500m-rerank-v2}"
+NIM_GEN_MODEL="${NIM_GEN_MODEL:-qwen/qwen-2.5-7b-instruct}"
 
 NIM_CACHE_DIR="${NIM_CACHE_DIR:-$HOME/.cache/nim}"
 mkdir -p "${NIM_CACHE_DIR}"

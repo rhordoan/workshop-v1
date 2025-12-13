@@ -26,8 +26,8 @@ class NIMConfig:
 
     # Model ids as expected by the NIM server
     embed_model: str = os.environ.get("NIM_EMBED_MODEL", "nvidia/llama-3.1-nemotron-embedding")
-    rerank_model: str = os.environ.get("NIM_RERANK_MODEL", "nvidia/llama-3.1-nemotron-rerank")
-    gen_model: str = os.environ.get("NIM_GEN_MODEL", "meta/llama-3.1-8b-instruct")
+    rerank_model: str = os.environ.get("NIM_RERANK_MODEL", "nvidia/llama-3.2-nemoretriever-500m-rerank-v2")
+    gen_model: str = os.environ.get("NIM_GEN_MODEL", "qwen/qwen-2.5-7b-instruct")
 
     # Endpoints (customizable)
     embeddings_path: str = os.environ.get("NIM_EMBED_PATH", "/v1/embeddings")
