@@ -25,9 +25,11 @@ class NIMConfig:
     timeout_s: float = 60.0
 
     # Model ids as expected by the NIM server
-    embed_model: str = os.environ.get("NIM_EMBED_MODEL", "nvidia/llama-3.1-nemotron-embedding")
-    rerank_model: str = os.environ.get("NIM_RERANK_MODEL", "nvidia/llama-3.1-nemotron-rerank")
-    gen_model: str = os.environ.get("NIM_GEN_MODEL", "meta/llama-3.1-8b-instruct")
+    #
+    # Defaults are aligned to the repo's `scripts/start_nims.sh` (override freely).
+    embed_model: str = os.environ.get("NIM_EMBED_MODEL", "nvidia/nv-embedqa-mistral-7b-v2")
+    rerank_model: str = os.environ.get("NIM_RERANK_MODEL", "nvidia/nv-rerankqa-mistral-4b-v3")
+    gen_model: str = os.environ.get("NIM_GEN_MODEL", "qwen/qwen-2.5-7b-instruct")
 
     # Endpoints (customizable)
     embeddings_path: str = os.environ.get("NIM_EMBED_PATH", "/v1/embeddings")
@@ -52,13 +54,21 @@ class NIMClient:
     def _url(self, path: str) -> str:
         return self.cfg.base_url.rstrip("/") + "/" + path.lstrip("/")
 
-    def embed(self, texts: list[str]) -> tuple[list[list[float]], float]:
+    def embed(self, texts: list[str], input_type: str = "query") -> tuple[list[list[float]], float]:
         """
         Returns embeddings and latency (seconds).
         Expects an OpenAI-compatible embeddings response:
           { data: [ { embedding: [...] }, ... ] }
         """
-        payload = {"model": self.cfg.embed_model, "input": texts}
+        payload: dict[str, Any] = {"model": self.cfg.embed_model, "input": texts}
+        # Some NIM embedding models (notably nv-embedqa-*) require an `input_type`
+        # of either "query" or "passage".
+        embed_requires_input_type = (
+            os.environ.get("NIM_EMBED_REQUIRES_INPUT_TYPE") == "1"
+            or "nv-embedqa" in (self.cfg.embed_model or "").lower()
+        )
+        if embed_requires_input_type:
+            payload["input_type"] = input_type
         t0 = now_s()
         r = requests.post(self._url(self.cfg.embeddings_path), headers=self._headers(), json=payload, timeout=self.cfg.timeout_s)
         dt = now_s() - t0
@@ -70,7 +80,7 @@ class NIMClient:
             raise ValueError(f"Unexpected embeddings response shape: keys={list(j.keys())}")
         return embs, dt
 
-    def embed_many(self, texts: list[str], batch_size: int = 64) -> tuple[list[list[float]], float]:
+    def embed_many(self, texts: list[str], batch_size: int = 64, input_type: str = "passage") -> tuple[list[list[float]], float]:
         """
         Batch helper around embed() to avoid request size limits.
         Returns (embeddings, total_latency_seconds).
@@ -80,7 +90,7 @@ class NIMClient:
         bs = max(1, int(batch_size))
         for i in range(0, len(texts), bs):
             chunk = texts[i : i + bs]
-            embs, dt = self.embed(chunk)
+            embs, dt = self.embed(chunk, input_type=input_type)
             all_embs.extend(embs)
             total += dt
         return all_embs, total
@@ -94,14 +104,36 @@ class NIMClient:
         Response expected:
           { results: [ { index: int, relevance_score: float }, ... ] }
         """
-        payload = {"model": self.cfg.rerank_model, "query": query, "documents": documents, "top_n": int(top_n)}
+        rerank_model = (self.cfg.rerank_model or "").lower()
+        # nv-rerank* NIMs commonly implement a `/v1/ranking` API. Our gateway maps
+        # `/v1/rerank` -> `/v1/ranking` so notebooks can keep using a stable path.
+        # Request/response shape differs from older "documents/top_n" style.
+        use_nv_ranking_api = "nv-rerank" in rerank_model
+        if use_nv_ranking_api:
+            payload: dict[str, Any] = {
+                "model": self.cfg.rerank_model,
+                "query": {"text": query},
+                "passages": [{"text": d} for d in documents],
+                "truncate": "END",
+            }
+        else:
+            payload = {"model": self.cfg.rerank_model, "query": query, "documents": documents, "top_n": int(top_n)}
         t0 = now_s()
         r = requests.post(self._url(self.cfg.rerank_path), headers=self._headers(), json=payload, timeout=self.cfg.timeout_s)
         dt = now_s() - t0
         r.raise_for_status()
         j = r.json()
+        if "rankings" in j:
+            rankings = j.get("rankings") or []
+            # Sort by score/logit descending, then take top_n indices
+            rankings_sorted = sorted(rankings, key=lambda x: float(x.get("logit", 0.0)), reverse=True)
+            idxs = [int(item["index"]) for item in rankings_sorted if "index" in item]
+            if not idxs:
+                raise ValueError(f"Unexpected rerank response shape: keys={list(j.keys())}")
+            return idxs[: int(top_n)], dt
+
         results = j.get("results") or j.get("data") or []
-        idxs = []
+        idxs: list[int] = []
         for item in results:
             if "index" in item:
                 idxs.append(int(item["index"]))
@@ -109,7 +141,7 @@ class NIMClient:
                 idxs.append(int(item["document_index"]))
         if not idxs:
             raise ValueError(f"Unexpected rerank response: keys={list(j.keys())}")
-        return idxs, dt
+        return idxs[: int(top_n)], dt
 
     def chat(self, prompt: str, max_tokens: int = 200, temperature: float = 0.2) -> tuple[str, float]:
         """

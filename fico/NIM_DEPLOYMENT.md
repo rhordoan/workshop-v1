@@ -40,8 +40,8 @@ This will expose the gateway on `http://localhost:8000`.
 The default models match `fico/nim_clients.py` defaults:
 
 - `NIM_EMBED_MODEL`: `nvidia/llama-3.1-nemotron-embedding`
-- `NIM_RERANK_MODEL`: `nvidia/llama-3.1-nemotron-rerank`
-- `NIM_GEN_MODEL`: `meta/llama-3.1-8b-instruct`
+- `NIM_RERANK_MODEL`: `nvidia/llama-3.2-nemoretriever-500m-rerank-v2`
+- `NIM_GEN_MODEL`: `qwen/qwen-2.5-7b-instruct`
 
 If your NIM images/tags differ, override these before starting:
 
