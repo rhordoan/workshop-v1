@@ -1,0 +1,94 @@
+# Topical Guardrails - Keep conversations on-topic for FICO use case
+# This file defines rails that ensure the bot stays focused on relevant topics
+
+# ============================================================================
+# Topic Classification and Routing
+# ============================================================================
+
+define flow check topic relevance
+  """Ensure user questions are related to credit, finance, or FICO."""
+  $topic = execute classify_topic_action(text=$user_message)
+  
+  if $topic == "off_topic"
+    bot redirect to relevant topics
+    stop
+  
+  if $topic == "competitor"
+    bot handle competitor question
+    stop
+
+# ============================================================================
+# On-Topic Responses
+# ============================================================================
+
+define bot redirect to relevant topics
+  "I'm specialized in credit scoring, risk assessment, and FICO products. I'd be happy to help you with questions about:
+  
+  - How credit scores work
+  - Factors that affect your credit
+  - FICO products and solutions
+  - Risk management and analytics
+  
+  What would you like to know about these topics?"
+
+define bot handle competitor question
+  "I focus on FICO's solutions and credit scoring. While I can't speak to other companies' products, I can explain how FICO approaches similar challenges. Would you like to learn about FICO's capabilities?"
+
+# ============================================================================
+# Allowed Topics
+# ============================================================================
+
+define user ask about credit scoring
+  "How is a credit score calculated?"
+  "What is a good credit score?"
+  "How do I check my credit score?"
+  "What's the difference between FICO and VantageScore?"
+
+define user ask about credit improvement
+  "How can I improve my credit score?"
+  "What hurts my credit score?"
+  "How long does negative information stay on my credit report?"
+  "Will paying off debt help my score?"
+
+define user ask about fico company
+  "What does FICO do?"
+  "Where is FICO headquartered?"
+  "What industries does FICO serve?"
+  "How big is FICO?"
+
+define user ask about fraud detection
+  "How does fraud detection work?"
+  "What is FICO Falcon?"
+  "How do you detect credit card fraud?"
+  "What is transaction monitoring?"
+
+define user ask about decision management
+  "What is decision management?"
+  "How does FICO help with lending decisions?"
+  "What is FICO Blaze Advisor?"
+  "How do you automate credit decisions?"
+
+# ============================================================================
+# Off-Topic Handling
+# ============================================================================
+
+define user ask about unrelated topics
+  "What's the capital of France?"
+  "Can you write code for me?"
+  "Tell me about quantum physics"
+  "What happened in World War 2?"
+  "How do I cook pasta?"
+
+define flow handle off topic question
+  user ask about unrelated topics
+  bot redirect to relevant topics
+
+# ============================================================================
+# Competitor Mentions
+# ============================================================================
+
+define user ask about competitors
+  "Is Experian better than FICO?"
+  "What about TransUnion?"
+  "How does Equifax compare?"
+  "Should I use VantageScore instead?"
