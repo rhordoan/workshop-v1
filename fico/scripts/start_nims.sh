@@ -157,7 +157,16 @@ http {
 
     # Rerank
     location /v1/rerank {
-      proxy_pass http://nim-rerank:8000;
+      # nv-rerank* NIMs commonly expose /v1/ranking. We map our stable /v1/rerank
+      # gateway path to the underlying endpoint to keep notebooks consistent.
+      proxy_pass http://nim-rerank:8000/v1/ranking;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Also expose the native reranker path (optional)
+    location /v1/ranking {
+      proxy_pass http://nim-rerank:8000/v1/ranking;
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
