@@ -31,6 +31,11 @@ python -m pip install --upgrade pip wheel setuptools
 echo "==> Installing requirements (may take a few minutes)"
 python -m pip install -r requirements.txt
 
+echo "==> Ensuring Jupyter kernel for this venv is registered"
+# ipykernel is sometimes not installed if the base image provides Jupyter separately.
+python -m pip install -q ipykernel
+python -m ipykernel install --user --name fico --display-name "Python (fico)" >/dev/null
+
 echo
 echo "==> Sanity check"
 python - <<'PY'
