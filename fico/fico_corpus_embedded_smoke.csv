@@ -1,0 +1,16 @@
+text,cluster,access_level,x,y,z
+APR calculation changes for variable-rate credit cards this quarter.,Finance,2,1.0609434159508864,0.7920031787519008,0.15009023916129147
+FICO Score 8 differs from 9 in medical debt treatment.,Finance,2,1.188112943278243,0.6097929622692326,-0.26043590137246364
+Interest rate adjustment depends on prime rate movement and borrower risk.,Finance,2,1.025568080633457,0.9367514815312835,-0.0033602315008577593
+Loan default probability rises when DTI exceeds forty percent.,Finance,2,0.829391214485284,1.1758795949725658,0.15555838708578967
+Loan default probability rises when DTI exceeds forty percent.,Finance,2,1.0132061395122431,1.2254482413936065,0.09350186845040913
+NVIDIA driver updates can break CUDA compatibility for inference workloads.,Infrastructure,3,-1.1718584925766478,1.0737501568164998,-0.1917765201657998
+Kubernetes pods crashloop after the sidecar injection policy update.,Infrastructure,3,-0.8243099397385455,0.9900148178027495,-0.036972472709052115
+Docker containers restart repeatedly after missing environment secrets.,Infrastructure,3,-1.1361859088807882,1.244508267734806,-0.03090589641376043
+GPU memory overflow occurs during large-batch embedding inference on A100.,Infrastructure,3,-1.0856655644326214,0.9295732899023541,0.10646183711066975
+Kubernetes pods crashloop after the sidecar injection policy update.,Infrastructure,3,-0.9269111871271843,1.0825465223191977,0.08616420060157655
+Weather in London is often rainy with sudden sunny intervals.,Noise,1,0.6424942802611383,-1.1219245049153848,0.3463271812785388
+Organic apple pie is great with cinnamon and a flaky crust.,Noise,1,-0.2441318184743633,-0.8152061732273513,0.8386916878162675
+Football match results vary widely depending on home field advantage.,Noise,1,-0.03418423729646252,-1.2520469430887584,0.25265563529262813
+Football match results vary widely depending on home field advantage.,Noise,1,0.19517783634741032,-0.7770237486389673,0.6629462804915585
+Football match results vary widely depending on home field advantage.,Noise,1,-0.19965291218660827,-0.9303516030799841,0.5350057427422185

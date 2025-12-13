@@ -1,0 +1,50 @@
+{
+  "generated_at_unix": 1765481901,
+  "template_only": false,
+  "gen_model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "seed": 42,
+  "n_per_cluster": 20,
+  "total_rows": 69,
+  "unique_texts": 63,
+  "per_cluster": [
+    {
+      "cluster": "Finance",
+      "rows": 23,
+      "unique_texts": 23,
+      "avg_chars": 726.0434782608696
+    },
+    {
+      "cluster": "Infrastructure",
+      "rows": 23,
+      "unique_texts": 23,
+      "avg_chars": 588.5652173913044
+    },
+    {
+      "cluster": "Noise",
+      "rows": 23,
+      "unique_texts": 17,
+      "avg_chars": 412.7826086956522
+    }
+  ],
+  "token_estimate": {
+    "total_tokens": 10307,
+    "avg_tokens": 149.3768115942029,
+    "p95_tokens": 282.79999999999995,
+    "max_tokens": 351
+  },
+  "artifacts": {
+    "embedded_csv": {
+      "path": "/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus_embedded.csv",
+      "bytes": 162483
+    },
+    "jsonl": {
+      "path": "/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus.jsonl",
+      "bytes": 195983
+    },
+    "txt": {
+      "path": "/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus.txt",
+      "bytes": 39827
+    }
+  }
+}

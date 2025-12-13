@@ -1,0 +1,4 @@
+embedded_csv	162483	/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus_embedded.csv
+corpus_jsonl	195983	/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus.jsonl
+corpus_txt	39827	/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus.txt
+stats_json	1250	/home/shadeform/fico/corpus_runs/llm_richer_n20_20251211_193028/fico_corpus_stats.json
