@@ -160,21 +160,56 @@ class VectorIndex:
 
 
 def make_prompt(question: str, contexts: list[Chunk]) -> str:
-    ctx_lines = []
-    for i, c in enumerate(contexts, start=1):
-        header = f"[{i}] doc_id={c.doc_id} chunk_id={c.chunk_id}"
-        if c.title:
-            header += f" title={c.title}"
-        ctx_lines.append(header + "\n" + c.text)
+    """
+    Build a plain-text prompt for both local text-generation models and NIM chat.
 
-    ctx = "\n\n".join(ctx_lines)
+    Important: we intentionally do NOT include doc_id/chunk_id headers in the prompt.
+    Some instruction-tuned models will copy those headers verbatim into the output,
+    which looks like the model is "answering" with metadata instead of content.
+    """
+    ctx = "\n\n---\n\n".join((c.text or "").strip() for c in contexts if (c.text or "").strip())
     return (
-        "You are a careful assistant. Answer the user's question using ONLY the provided context.\n"
-        "If the context is insufficient, say you don't know.\n\n"
+        "You are a careful assistant.\n"
+        "Rules:\n"
+        "- Use ONLY the provided CONTEXT.\n"
+        "- If the context is insufficient, say \"I don't know\".\n"
+        "- Do NOT repeat the context, do NOT cite chunk ids/doc ids, and do NOT output JSON.\n"
+        "- Output plain text only.\n\n"
         f"QUESTION:\n{question}\n\n"
         f"CONTEXT:\n{ctx}\n\n"
-        "ANSWER:"
+        "FINAL ANSWER:\n"
     )
+
+
+def clean_answer(text: str) -> str:
+    """
+    Best-effort cleanup for model outputs in notebooks.
+    Keeps the lab readable if a model emits chat-role markers or echoes context headers.
+    """
+    s = (text or "").strip()
+    if not s:
+        return s
+
+    # If the model echoed a marker, take the tail after the last one.
+    markers = ["FINAL ANSWER:", "ANSWER:"]
+    for m in markers:
+        if m in s:
+            s = s.split(m)[-1].strip()
+
+    # Drop common chat-role prefix.
+    for prefix in ("assistant\n", "assistant ", "Assistant\n", "Assistant "):
+        if s.startswith(prefix):
+            s = s[len(prefix) :].lstrip()
+
+    # If the model starts by copying our old context header style, remove those lines.
+    lines = []
+    for line in s.splitlines():
+        if "doc_id=" in line and "chunk_id=" in line:
+            continue
+        lines.append(line)
+    s = "\n".join(lines).strip()
+
+    return s
 
 
 def default_cache_dir() -> str:
