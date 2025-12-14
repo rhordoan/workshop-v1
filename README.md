@@ -25,6 +25,7 @@ Open the notebooks:
 - `day2_01_module_b_vector_math_rbac.ipynb`
 - `day2_02_module_c_rag_arch_latency_profiler.ipynb`
 - `day3_02_inference_physics_nim.ipynb`
+- `day3_04_observability_tracing_rag.ipynb`
 
 ## NIM mode (optional)
 
@@ -47,5 +48,24 @@ cd fico
 ```
 
 More detail: see `fico/NIM_DEPLOYMENT.md`.
+
+## Observability lab (OpenTelemetry + Jaeger)
+
+Day 3 includes an observability notebook that uses traces to explain where time (and failures) occur in a RAG request.
+
+Start the local tracing stack (Jaeger UI on `http://localhost:16686`):
+
+```bash
+cd fico
+chmod +x scripts/start_observability.sh scripts/stop_observability.sh
+./scripts/start_observability.sh
+```
+
+Stop it with:
+
+```bash
+cd fico
+./scripts/stop_observability.sh
+```
 
 
