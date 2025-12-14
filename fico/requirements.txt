@@ -24,6 +24,7 @@ ragas>=0.1.16
 datasets>=2.20
 langchain>=0.2
 langchain-community>=0.2
+langchain-openai>=0.2
 
 # Day 3 Observability: OpenTelemetry tracing (OTLP -> collector -> Jaeger)
 opentelemetry-api>=1.26
