@@ -1,0 +1,11 @@
+✅ Target: 250 docs/cluster, seed=42
+⚙️ Using CUDA GPU for generation with model: Qwen/Qwen2.5-1.5B-Instruct
+✅ Generated 825 rows. Embedding on GPU with: sentence-transformers/all-MiniLM-L6-v2
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus_embeddings.npy
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus_pca.json
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus_embedded.csv
+   Columns: doc_id, cluster, tenant_id, doc_type, owner_team, is_pair, pair_id, created_at, title, body, body_redacted, redaction_count, tags, access_level, allowed_roles, allowed_tenants, restricted_tags, text, embed_text, x, y, z
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus.jsonl
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus.txt
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus_stats.json
+✅ Wrote: /home/shadeform/fico-workshop/fico/corpus_runs/llm_richer_n250_20251215_110959/fico_corpus_sizes.txt
