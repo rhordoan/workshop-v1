@@ -21,10 +21,13 @@ set -euo pipefail
 # Optional overrides:
 #   export NIM_EMBED_IMAGE="nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1"
 #   export NIM_RERANK_IMAGE="nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2"
-#   export NIM_GEN_IMAGE="nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest"
+#   export NIM_GEN_IMAGE="nvcr.io/nim/ibm-granite/granite-3.3-8b-instruct:1.8.4"
 #   export NIM_EMBED_MODEL="nvidia/nv-embedqa-mistral-7b-v2"
 #   export NIM_RERANK_MODEL="nvidia/nv-rerankqa-mistral-4b-v3"
-#   export NIM_GEN_MODEL="qwen/qwen-2.5-7b-instruct"
+#   export NIM_GEN_MODEL="ibm-granite/granite-3.3-8b-instruct"
+#   # Cap chat model context length (reduces KV-cache allocation, prevents OOM).
+#   # Default is 20000 tokens for workshops. Set to 0/empty to let the NIM profile decide.
+#   export NIM_MAX_MODEL_LEN=20000
 #   export NIM_CACHE_DIR="$HOME/.cache/nim"
 #   export START_EMBED=1
 #   export START_RERANK=1
@@ -43,23 +46,30 @@ require_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "Missing required comm
 require_cmd docker
 
 NGC_API_KEY="${NGC_API_KEY:-}"
+SKIP_LOGIN="${SKIP_LOGIN:-0}"
+SKIP_PULL="${SKIP_PULL:-0}"
 if [[ -z "${NGC_API_KEY}" ]]; then
-  cat >&2 <<'EOF'
-NGC_API_KEY is not set.
-
-Create an API key in NGC and export it, then re-run:
-  export NGC_API_KEY="..."
-EOF
-  exit 1
+  # If images are already present locally, we can still start containers without logging in.
+  # This makes workshop iteration smoother (and avoids blocking on auth for local development).
+  SKIP_LOGIN="1"
+  SKIP_PULL="1"
+  echo "⚠️  NGC_API_KEY is not set. Skipping docker login/pull (SKIP_LOGIN=1 SKIP_PULL=1)." >&2
+  echo "    If any nvcr.io images are missing locally, export NGC_API_KEY and re-run:" >&2
+  echo "      export NGC_API_KEY=\"...\"" >&2
 fi
 
 NIM_EMBED_IMAGE="${NIM_EMBED_IMAGE:-nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1}"
 NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2}"
-NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/qwen/qwen-2.5-7b-instruct:latest}"
+NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/ibm-granite/granite-3.3-8b-instruct:1.8.4}"
 
 NIM_EMBED_MODEL="${NIM_EMBED_MODEL:-nvidia/nv-embedqa-mistral-7b-v2}"
 NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/nv-rerankqa-mistral-4b-v3}"
-NIM_GEN_MODEL="${NIM_GEN_MODEL:-qwen/qwen-2.5-7b-instruct}"
+NIM_GEN_MODEL="${NIM_GEN_MODEL:-ibm-granite/granite-3.3-8b-instruct}"
+
+# IMPORTANT: many chat NIM profiles default to very large max context lengths (e.g., 131k),
+# which can trigger huge KV-cache allocations and OOM even on large GPUs if other services
+# are sharing the card. For workshop stability, we cap by default.
+NIM_MAX_MODEL_LEN="${NIM_MAX_MODEL_LEN:-20000}"
 
 START_EMBED="${START_EMBED:-1}"
 START_RERANK="${START_RERANK:-1}"
@@ -87,7 +97,11 @@ RERANK_NAME="nim-rerank"
 GEN_NAME="nim-gen"
 
 echo "==> Docker login to nvcr.io (non-interactive)"
-docker login nvcr.io -u '$oauthtoken' -p "${NGC_API_KEY}" >/dev/null
+if [[ "${SKIP_LOGIN}" != "1" ]]; then
+  docker login nvcr.io -u '$oauthtoken' -p "${NGC_API_KEY}" >/dev/null
+else
+  echo "==> Skipping docker login (SKIP_LOGIN=1)"
+fi
 
 echo "==> Create docker network (${NETWORK}) if needed"
 docker network inspect "${NETWORK}" >/dev/null 2>&1 || docker network create "${NETWORK}" >/dev/null
@@ -105,10 +119,51 @@ stop_if_running "${EMBED_NAME}"
 stop_if_running "${RERANK_NAME}"
 stop_if_running "${GEN_NAME}"
 
+wait_ready() {
+  # Wait for a service inside the docker network to report ready.
+  #
+  # We avoid requiring host curl by using a tiny curl container.
+  local label="$1"
+  local url="$2"
+  local timeout_s="${3:-900}"
+  local poll_s="${4:-3}"
+
+  if [[ "${SKIP_WAIT:-0}" == "1" ]]; then
+    echo "==> Skipping readiness wait for ${label} (SKIP_WAIT=1)"
+    return 0
+  fi
+
+  echo "==> Waiting for ${label} readiness (${url})"
+  local start
+  start="$(date +%s)"
+  while true; do
+    # http_code=000 means connection failure (not listening / DNS / etc.)
+    local code
+    code="$(docker run --rm --network "${NETWORK}" curlimages/curl:8.5.0 -sS -o /dev/null -w '%{http_code}' "${url}" || true)"
+    if [[ "${code}" == "200" ]]; then
+      echo "==> ${label} is ready."
+      return 0
+    fi
+
+    local now
+    now="$(date +%s)"
+    if (( now - start >= timeout_s )); then
+      echo "❌ Timed out waiting for ${label} readiness after ${timeout_s}s (last http_code=${code})" >&2
+      return 1
+    fi
+
+    sleep "${poll_s}"
+  done
+}
+
 echo "==> Pull images"
-if [[ "${START_EMBED}" == "1" ]]; then docker pull "${NIM_EMBED_IMAGE}"; fi
-if [[ "${START_RERANK}" == "1" ]]; then docker pull "${NIM_RERANK_IMAGE}"; fi
-if [[ "${START_GEN}" == "1" ]]; then docker pull "${NIM_GEN_IMAGE}"; fi
+if [[ "${SKIP_PULL}" == "1" ]]; then
+  echo "==> Skipping docker pull (SKIP_PULL=1)"
+else
+  if [[ "${START_EMBED}" == "1" ]]; then docker pull "${NIM_EMBED_IMAGE}"; fi
+  if [[ "${START_RERANK}" == "1" ]]; then docker pull "${NIM_RERANK_IMAGE}"; fi
+  if [[ "${START_GEN}" == "1" ]]; then docker pull "${NIM_GEN_IMAGE}"; fi
+fi
 
 COMMON_ENV=(
   # Some NIM images require one of these to accept terms non-interactively.
@@ -136,6 +191,11 @@ if [[ "${START_EMBED}" == "1" ]]; then
     -e "NIM_MODEL=${NIM_EMBED_MODEL}" \
     -e "MODEL_NAME=${NIM_EMBED_MODEL}" \
     "${NIM_EMBED_IMAGE}" >/dev/null
+  wait_ready "${EMBED_NAME}" "http://${EMBED_NAME}:8000/v1/health/ready" "${NIM_WAIT_TIMEOUT_S:-600}" "${NIM_WAIT_POLL_S:-3}" || {
+    echo "==> Recent logs (${EMBED_NAME}):" >&2
+    docker logs --tail 200 "${EMBED_NAME}" >&2 || true
+    exit 1
+  }
 else
   echo "==> Skipping embedding NIM (START_EMBED!=1)"
 fi
@@ -148,6 +208,11 @@ if [[ "${START_RERANK}" == "1" ]]; then
     -e "NIM_MODEL=${NIM_RERANK_MODEL}" \
     -e "MODEL_NAME=${NIM_RERANK_MODEL}" \
     "${NIM_RERANK_IMAGE}" >/dev/null
+  wait_ready "${RERANK_NAME}" "http://${RERANK_NAME}:8000/v1/health/ready" "${NIM_WAIT_TIMEOUT_S:-600}" "${NIM_WAIT_POLL_S:-3}" || {
+    echo "==> Recent logs (${RERANK_NAME}):" >&2
+    docker logs --tail 200 "${RERANK_NAME}" >&2 || true
+    exit 1
+  }
 else
   echo "==> Skipping rerank NIM (START_RERANK!=1)"
 fi
@@ -159,7 +224,14 @@ if [[ "${START_GEN}" == "1" ]]; then
     -e "NIM_MODEL_NAME=${NIM_GEN_MODEL}" \
     -e "NIM_MODEL=${NIM_GEN_MODEL}" \
     -e "MODEL_NAME=${NIM_GEN_MODEL}" \
+    -e "NIM_MAX_MODEL_LEN=${NIM_MAX_MODEL_LEN}" \
     "${NIM_GEN_IMAGE}" >/dev/null
+  # Chat NIM can take longer (engine build / profile selection).
+  wait_ready "${GEN_NAME}" "http://${GEN_NAME}:8000/v1/health/ready" "${NIM_WAIT_TIMEOUT_S:-1200}" "${NIM_WAIT_POLL_S:-3}" || {
+    echo "==> Recent logs (${GEN_NAME}):" >&2
+    docker logs --tail 200 "${GEN_NAME}" >&2 || true
+    exit 1
+  }
 else
   echo "==> Skipping generation/chat NIM (START_GEN!=1)"
 fi
