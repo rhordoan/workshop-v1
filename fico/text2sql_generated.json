@@ -1,0 +1,1107 @@
+[
+    {
+      "instruction": "List the names of all customers.",
+      "sql": "SELECT name FROM customers;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me all unique account types available.",
+      "sql": "SELECT DISTINCT account_type FROM accounts;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many customers do we have in the database?",
+      "sql": "SELECT COUNT(*) FROM customers;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the email addresses of customers with a FICO score above 750.",
+      "sql": "SELECT email FROM customers WHERE fico_score > 750;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all credit applications that have been denied.",
+      "sql": "SELECT * FROM credit_applications WHERE status = 'denied';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the average FICO score of all customers?",
+      "sql": "SELECT AVG(fico_score) FROM customers;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the details of the account with ID 105.",
+      "sql": "SELECT * FROM accounts WHERE account_id = 105;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List customers who have a FICO score between 600 and 700.",
+      "sql": "SELECT * FROM customers WHERE fico_score BETWEEN 600 AND 700;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the top 5 highest requested amounts in credit applications.",
+      "sql": "SELECT requested_amount FROM credit_applications ORDER BY requested_amount DESC LIMIT 5;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Which customers signed up after January 1st, 2023?",
+      "sql": "SELECT name FROM customers WHERE created_at > '2023-01-01';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the number of savings accounts.",
+      "sql": "SELECT COUNT(*) FROM accounts WHERE account_type = 'savings';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me all transactions that are 'debit' type.",
+      "sql": "SELECT * FROM transactions WHERE txn_type = 'debit';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the maximum balance currently held in any account.",
+      "sql": "SELECT MAX(balance) FROM accounts;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all customers sorted by their FICO score in ascending order.",
+      "sql": "SELECT name, fico_score FROM customers ORDER BY fico_score ASC;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the total amount of money requested in all pending applications?",
+      "sql": "SELECT SUM(requested_amount) FROM credit_applications WHERE status = 'pending';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Retrieve the customer IDs for those with a FICO score exactly 850.",
+      "sql": "SELECT customer_id FROM customers WHERE fico_score = 850;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me transactions with an amount greater than 5000.",
+      "sql": "SELECT * FROM transactions WHERE amount > 5000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List the application IDs for all approved credit requests.",
+      "sql": "SELECT app_id FROM credit_applications WHERE status = 'approved';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find accounts created before 2020.",
+      "sql": "SELECT account_id FROM accounts WHERE opened_at < '2020-01-01';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the names of customers starting with the letter 'A'.",
+      "sql": "SELECT name FROM customers WHERE name LIKE 'A%';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many transactions occurred on '2023-05-15'?",
+      "sql": "SELECT COUNT(*) FROM transactions WHERE txn_date = '2023-05-15';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Get the minimum FICO score recorded.",
+      "sql": "SELECT MIN(fico_score) FROM customers;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all accounts with a zero balance.",
+      "sql": "SELECT account_id FROM accounts WHERE balance = 0;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the decision dates for denied applications.",
+      "sql": "SELECT decision_date FROM credit_applications WHERE status = 'denied';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the total number of credit type accounts.",
+      "sql": "SELECT COUNT(*) FROM accounts WHERE account_type = 'credit';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Retrieve the email of customer with ID 42.",
+      "sql": "SELECT email FROM customers WHERE customer_id = 42;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List transactions sorted by date, newest first.",
+      "sql": "SELECT * FROM transactions ORDER BY txn_date DESC;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the sum of all transaction amounts labeled as 'credit'?",
+      "sql": "SELECT SUM(amount) FROM transactions WHERE txn_type = 'credit';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me customers with FICO scores less than 500.",
+      "sql": "SELECT name, fico_score FROM customers WHERE fico_score < 500;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the ID of the transaction with the highest amount.",
+      "sql": "SELECT txn_id FROM transactions ORDER BY amount DESC LIMIT 1;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all columns for accounts with a negative balance.",
+      "sql": "SELECT * FROM accounts WHERE balance < 0;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count how many credit applications requested more than 10000.",
+      "sql": "SELECT COUNT(*) FROM credit_applications WHERE requested_amount > 10000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Identify customers who do not have an email address listed.",
+      "sql": "SELECT name FROM customers WHERE email IS NULL;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the earliest account opening date.",
+      "sql": "SELECT MIN(opened_at) FROM accounts;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Get the status of the credit application with ID 99.",
+      "sql": "SELECT status FROM credit_applications WHERE app_id = 99;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many checking accounts are there?",
+      "sql": "SELECT COUNT(*) FROM accounts WHERE account_type = 'checking';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List the top 3 customers with the lowest FICO scores.",
+      "sql": "SELECT name, fico_score FROM customers ORDER BY fico_score ASC LIMIT 3;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find all transactions that are not of type 'debit'.",
+      "sql": "SELECT * FROM transactions WHERE txn_type != 'debit';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Calculate the average requested amount for all credit applications.",
+      "sql": "SELECT AVG(requested_amount) FROM credit_applications;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me all data for customers created in 2022.",
+      "sql": "SELECT * FROM customers WHERE created_at LIKE '2022%';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What are the distinct statuses for credit applications?",
+      "sql": "SELECT DISTINCT status FROM credit_applications;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List account IDs for accounts with balances over 100,000.",
+      "sql": "SELECT account_id FROM accounts WHERE balance > 100000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the count of transactions with amounts between 10 and 50.",
+      "sql": "SELECT COUNT(*) FROM transactions WHERE amount BETWEEN 10 AND 50;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the name and email of the customer with ID 1.",
+      "sql": "SELECT name, email FROM customers WHERE customer_id = 1;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Retrieve all rows from the accounts table sorted by balance.",
+      "sql": "SELECT * FROM accounts ORDER BY balance;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many applications were decided on '2023-11-01'?",
+      "sql": "SELECT COUNT(*) FROM credit_applications WHERE decision_date = '2023-11-01';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List customers with 'Smith' in their name.",
+      "sql": "SELECT * FROM customers WHERE name LIKE '%Smith%';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the sum of balances for all 'savings' accounts.",
+      "sql": "SELECT SUM(balance) FROM accounts WHERE account_type = 'savings';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the 10 most recent transactions.",
+      "sql": "SELECT * FROM transactions ORDER BY txn_date DESC LIMIT 10;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the highest FICO score among customers created before 2021?",
+      "sql": "SELECT MAX(fico_score) FROM customers WHERE created_at < '2021-01-01';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List the IDs of accounts that have 'credit' type and negative balance.",
+      "sql": "SELECT account_id FROM accounts WHERE account_type = 'credit' AND balance < 0;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the number of approved applications.",
+      "sql": "SELECT COUNT(*) FROM credit_applications WHERE status = 'approved';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the average transaction amount.",
+      "sql": "SELECT AVG(amount) FROM transactions;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the customer details for the user with email 'john.doe@example.com'.",
+      "sql": "SELECT * FROM customers WHERE email = 'john.doe@example.com';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all transactions where the amount is exactly 100.00.",
+      "sql": "SELECT * FROM transactions WHERE amount = 100.00;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many customers have a FICO score of 700 or higher?",
+      "sql": "SELECT COUNT(*) FROM customers WHERE fico_score >= 700;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Select the latest 5 credit applications.",
+      "sql": "SELECT * FROM credit_applications ORDER BY app_id DESC LIMIT 5;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the total balance of all accounts combined.",
+      "sql": "SELECT SUM(balance) FROM accounts;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List accounts that are not 'checking' accounts.",
+      "sql": "SELECT * FROM accounts WHERE account_type <> 'checking';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the names of customers with IDs 1, 2, and 3.",
+      "sql": "SELECT name FROM customers WHERE customer_id IN (1, 2, 3);",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the smallest transaction amount recorded?",
+      "sql": "SELECT MIN(amount) FROM transactions;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the number of customers with a 'prime' credit score (above 720).",
+      "sql": "SELECT COUNT(*) FROM customers WHERE fico_score > 720;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all applications that are currently pending.",
+      "sql": "SELECT * FROM credit_applications WHERE status = 'pending';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the account type for account ID 500.",
+      "sql": "SELECT account_type FROM accounts WHERE account_id = 500;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show all customer names sorted alphabetically.",
+      "sql": "SELECT name FROM customers ORDER BY name ASC;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Get the date when customer 55 was created.",
+      "sql": "SELECT created_at FROM customers WHERE customer_id = 55;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "How many applications requested less than 5000?",
+      "sql": "SELECT COUNT(*) FROM credit_applications WHERE requested_amount < 5000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List transactions with ID between 1000 and 2000.",
+      "sql": "SELECT * FROM transactions WHERE txn_id BETWEEN 1000 AND 2000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the average balance of checking accounts.",
+      "sql": "SELECT AVG(balance) FROM accounts WHERE account_type = 'checking';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find customers whose name ends with 'son'.",
+      "sql": "SELECT * FROM customers WHERE name LIKE '%son';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the total number of transactions.",
+      "sql": "SELECT COUNT(*) FROM transactions;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Retrieve the requested amount for application ID 7.",
+      "sql": "SELECT requested_amount FROM credit_applications WHERE app_id = 7;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the maximum FICO score currently in the system?",
+      "sql": "SELECT MAX(fico_score) FROM customers;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all account details for customer ID 88.",
+      "sql": "SELECT * FROM accounts WHERE customer_id = 88;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the count of transactions categorized as 'debit'.",
+      "sql": "SELECT COUNT(*) FROM transactions WHERE txn_type = 'debit';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the total requested credit amount for denied applications.",
+      "sql": "SELECT SUM(requested_amount) FROM credit_applications WHERE status = 'denied';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List customers created on the exact date '2022-12-31'.",
+      "sql": "SELECT * FROM customers WHERE created_at = '2022-12-31';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the balance of the account with the highest ID.",
+      "sql": "SELECT balance FROM accounts ORDER BY account_id DESC LIMIT 1;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count distinct customer IDs in the accounts table.",
+      "sql": "SELECT COUNT(DISTINCT customer_id) FROM accounts;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the total balance for each customer.",
+      "sql": "SELECT c.name, SUM(a.balance) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show me the number of accounts held by each customer.",
+      "sql": "SELECT c.name, COUNT(a.account_id) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have submitted a credit application.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "What is the average transaction amount for each account type?",
+      "sql": "SELECT a.account_type, AVG(t.amount) FROM accounts a JOIN transactions t ON a.account_id = t.account_id GROUP BY a.account_type;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find customers with at least one approved credit application.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'approved';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the total transaction volume (sum of amounts) for each account.",
+      "sql": "SELECT account_id, SUM(amount) FROM transactions GROUP BY account_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers and their email addresses who have a 'checking' account.",
+      "sql": "SELECT c.name, c.email FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type = 'checking';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count how many transactions exist for each customer.",
+      "sql": "SELECT c.name, COUNT(t.txn_id) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the maximum transaction amount per account.",
+      "sql": "SELECT account_id, MAX(amount) FROM transactions GROUP BY account_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Which customers have a FICO score above 700 and have a savings account?",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE c.fico_score > 700 AND a.account_type = 'savings';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the average balance per customer, sorted by highest average.",
+      "sql": "SELECT c.name, AVG(a.balance) as avg_bal FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name ORDER BY avg_bal DESC;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List all transactions associated with customers named 'John'.",
+      "sql": "SELECT t.* FROM transactions t JOIN accounts a ON t.account_id = a.account_id JOIN customers c ON a.customer_id = c.customer_id WHERE c.name LIKE '%John%';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the total amount requested in applications by each customer.",
+      "sql": "SELECT c.name, SUM(ca.requested_amount) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count the number of denied applications per customer.",
+      "sql": "SELECT c.name, COUNT(ca.app_id) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'denied' GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Who are the customers with no accounts?",
+      "sql": "SELECT c.name FROM customers c LEFT JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_id IS NULL;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show me the total balance of all accounts for customers with a FICO score < 600.",
+      "sql": "SELECT SUM(a.balance) FROM accounts a JOIN customers c ON a.customer_id = c.customer_id WHERE c.fico_score < 600;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List account IDs and the number of credit transactions associated with them.",
+      "sql": "SELECT account_id, COUNT(*) FROM transactions WHERE txn_type = 'credit' GROUP BY account_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the average FICO score for customers who have an approved application.",
+      "sql": "SELECT AVG(c.fico_score) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'approved';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the name of the customer and the date of their most recent transaction.",
+      "sql": "SELECT c.name, MAX(t.txn_date) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List accounts that have more than 5 transactions.",
+      "sql": "SELECT account_id FROM transactions GROUP BY account_id HAVING COUNT(*) > 5;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "What is the total requested amount for applications decided in 2023?",
+      "sql": "SELECT SUM(requested_amount) FROM credit_applications WHERE decision_date LIKE '2023%';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find customers who have both checking and savings accounts.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type IN ('checking', 'savings') GROUP BY c.customer_id HAVING COUNT(DISTINCT a.account_type) = 2;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the number of accounts opened each year.",
+      "sql": "SELECT strftime('%Y', opened_at) as year, COUNT(*) FROM accounts GROUP BY year;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers with a total balance exceeding 50,000.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name HAVING SUM(a.balance) > 50000;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the transaction with the highest amount for customer 'Alice'.",
+      "sql": "SELECT MAX(t.amount) FROM transactions t JOIN accounts a ON t.account_id = a.account_id JOIN customers c ON a.customer_id = c.customer_id WHERE c.name = 'Alice';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count the number of applications per status.",
+      "sql": "SELECT status, COUNT(*) FROM credit_applications GROUP BY status;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the average requested amount grouped by application status.",
+      "sql": "SELECT status, AVG(requested_amount) FROM credit_applications GROUP BY status;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have never applied for credit.",
+      "sql": "SELECT c.name FROM customers c LEFT JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.app_id IS NULL;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the total number of debit transactions for each customer.",
+      "sql": "SELECT c.name, COUNT(t.txn_id) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE t.txn_type = 'debit' GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show account types and the sum of their balances.",
+      "sql": "SELECT account_type, SUM(balance) FROM accounts GROUP BY account_type;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Retrieve the names of customers who have a pending application and a FICO score < 650.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'pending' AND c.fico_score < 650;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "What is the max balance for customers created in 2021?",
+      "sql": "SELECT MAX(a.balance) FROM accounts a JOIN customers c ON a.customer_id = c.customer_id WHERE c.created_at LIKE '2021%';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List transactions for accounts with a balance less than 100.",
+      "sql": "SELECT t.* FROM transactions t JOIN accounts a ON t.account_id = a.account_id WHERE a.balance < 100;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count how many distinct customers have performed a transaction.",
+      "sql": "SELECT COUNT(DISTINCT c.customer_id) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the average FICO score grouped by the number of accounts held.",
+      "sql": "SELECT COUNT(a.account_id) as num_accounts, AVG(c.fico_score) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the total approved credit amount per customer.",
+      "sql": "SELECT c.name, SUM(ca.requested_amount) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'approved' GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List all customers joined with their account details, sorted by customer name.",
+      "sql": "SELECT c.name, a.* FROM customers c JOIN accounts a ON c.customer_id = a.customer_id ORDER BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the highest transaction amount for 'credit' type accounts.",
+      "sql": "SELECT MAX(t.amount) FROM transactions t JOIN accounts a ON t.account_id = a.account_id WHERE a.account_type = 'credit';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count the number of transactions per month for 2023.",
+      "sql": "SELECT strftime('%m', txn_date) as month, COUNT(*) FROM transactions WHERE txn_date LIKE '2023%' GROUP BY month;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the names of customers who have opened an account in the last 30 days.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.opened_at >= date('now', '-30 days');",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Calculate the debt-to-income proxy: sum of negative balances vs FICO score.",
+      "sql": "SELECT c.fico_score, SUM(a.balance) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.balance < 0 GROUP BY c.customer_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List application IDs where the requested amount is greater than the average customer's total balance.",
+      "sql": "SELECT app_id FROM credit_applications WHERE requested_amount > (SELECT AVG(balance) FROM accounts);",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the customer with the highest total balance across all accounts.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name ORDER BY SUM(a.balance) DESC LIMIT 1;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the number of distinct account types per customer.",
+      "sql": "SELECT c.name, COUNT(DISTINCT a.account_type) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have 'credit' accounts but no transactions.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id LEFT JOIN transactions t ON a.account_id = t.account_id WHERE a.account_type = 'credit' AND t.txn_id IS NULL;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the average balance for customers with pending applications.",
+      "sql": "SELECT AVG(a.balance) FROM accounts a JOIN customers c ON a.customer_id = c.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'pending';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the latest transaction date for each account.",
+      "sql": "SELECT account_id, MAX(txn_date) FROM transactions GROUP BY account_id;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count how many customers have a FICO score below the overall average.",
+      "sql": "SELECT COUNT(*) FROM customers WHERE fico_score < (SELECT AVG(fico_score) FROM customers);",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List the sum of 'credit' transaction amounts per customer.",
+      "sql": "SELECT c.name, SUM(t.amount) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE t.txn_type = 'credit' GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find customers whose total requested credit amount exceeds 50,000.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.name HAVING SUM(ca.requested_amount) > 50000;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show me the distribution of FICO scores by rounding to the nearest hundred.",
+      "sql": "SELECT ROUND(fico_score, -2) as bin, COUNT(*) FROM customers GROUP BY bin;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List email addresses of customers who have both approved and denied applications.",
+      "sql": "SELECT email FROM customers c WHERE EXISTS (SELECT 1 FROM credit_applications ca WHERE ca.customer_id = c.customer_id AND status = 'approved') AND EXISTS (SELECT 1 FROM credit_applications ca WHERE ca.customer_id = c.customer_id AND status = 'denied');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the customer with the most transactions.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id ORDER BY COUNT(t.txn_id) DESC LIMIT 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Calculate the approval rate for each customer (approved / total apps).",
+      "sql": "SELECT c.name, CAST(SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) as approval_rate FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.customer_id;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers who have a higher balance than the average balance of all customers.",
+      "sql": "SELECT c.name, SUM(a.balance) as total_bal FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id HAVING total_bal > (SELECT SUM(balance) / COUNT(DISTINCT customer_id) FROM accounts);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have applied for credit but have no accounts.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id LEFT JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_id IS NULL;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average FICO score of customers who have made a transaction over $1000.",
+      "sql": "SELECT AVG(fico_score) FROM customers WHERE customer_id IN (SELECT DISTINCT a.customer_id FROM accounts a JOIN transactions t ON a.account_id = t.account_id WHERE t.amount > 1000);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Identify 'high risk' customers: FICO < 600 and a denied application.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE c.fico_score < 600 AND ca.status = 'denied';",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the account type that has the highest average balance.",
+      "sql": "SELECT account_type FROM accounts GROUP BY account_type ORDER BY AVG(balance) DESC LIMIT 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers whose total 'debit' transactions exceed their total 'credit' transactions.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id HAVING SUM(CASE WHEN txn_type='debit' THEN amount ELSE 0 END) > SUM(CASE WHEN txn_type='credit' THEN amount ELSE 0 END);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the percentage of approved applications for prime customers (>720).",
+      "sql": "SELECT (CAST(SUM(CASE WHEN ca.status = 'approved' THEN 1 ELSE 0 END) AS REAL) / COUNT(*)) * 100 FROM credit_applications ca JOIN customers c ON ca.customer_id = c.customer_id WHERE c.fico_score > 720;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers who have opened accounts in 2023 but have no transactions.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id LEFT JOIN transactions t ON a.account_id = t.account_id WHERE a.opened_at LIKE '2023%' AND t.txn_id IS NULL;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "What is the average time between account opening and the first transaction?",
+      "sql": "SELECT AVG(julianday(min_txn) - julianday(opened_at)) FROM (SELECT a.opened_at, MIN(t.txn_date) as min_txn FROM accounts a JOIN transactions t ON a.account_id = t.account_id GROUP BY a.account_id);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have all three account types (checking, savings, credit).",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type IN ('checking', 'savings', 'credit') GROUP BY c.customer_id HAVING COUNT(DISTINCT a.account_type) = 3;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the customer with the largest difference between their requested loan amount and their total account balance.",
+      "sql": "SELECT c.name, (MAX(ca.requested_amount) - SUM(a.balance)) as diff FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.customer_id ORDER BY diff DESC LIMIT 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the monthly total transaction amount for account ID 1.",
+      "sql": "SELECT strftime('%Y-%m', txn_date) as month, SUM(amount) FROM transactions WHERE account_id = 1 GROUP BY month;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Identify accounts where the balance is lower than the sum of all 'debit' transactions (potential overdraft).",
+      "sql": "SELECT a.account_id FROM accounts a JOIN transactions t ON a.account_id = t.account_id WHERE t.txn_type = 'debit' GROUP BY a.account_id HAVING a.balance < SUM(t.amount);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have applied for more credit than their current total balance.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'pending' GROUP BY c.customer_id HAVING MAX(ca.requested_amount) > SUM(a.balance);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average FICO score for customers with 'savings' accounts compared to those without.",
+      "sql": "SELECT 'With Savings' as category, AVG(fico_score) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type = 'savings' UNION SELECT 'Without Savings', AVG(fico_score) FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM accounts WHERE account_type = 'savings');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the rank of customers based on total balance.",
+      "sql": "SELECT c.name, RANK() OVER (ORDER BY SUM(a.balance) DESC) as rank FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have had more than 3 denied applications in the last year.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'denied' AND ca.decision_date >= date('now', '-1 year') GROUP BY c.customer_id HAVING COUNT(ca.app_id) > 3;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the account with the highest variability in transaction amounts (using variance proxy).",
+      "sql": "SELECT account_id FROM transactions GROUP BY account_id ORDER BY (AVG(amount*amount) - AVG(amount)*AVG(amount)) DESC LIMIT 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers whose average transaction amount is double the global average transaction amount.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id HAVING AVG(t.amount) > 2 * (SELECT AVG(amount) FROM transactions);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List the customer names who have the same FICO score as 'John Doe'.",
+      "sql": "SELECT name FROM customers WHERE fico_score = (SELECT fico_score FROM customers WHERE name = 'John Doe') AND name != 'John Doe';",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the total balance of customers who have been denied at least once.",
+      "sql": "SELECT SUM(a.balance) FROM accounts a WHERE a.customer_id IN (SELECT DISTINCT customer_id FROM credit_applications WHERE status = 'denied');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the ratio of credit to debit transactions for each account.",
+      "sql": "SELECT account_id, CAST(SUM(CASE WHEN txn_type = 'credit' THEN 1 ELSE 0 END) AS REAL) / NULLIF(SUM(CASE WHEN txn_type = 'debit' THEN 1 ELSE 0 END), 0) as ratio FROM transactions GROUP BY account_id;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have not made any transactions in the last 6 months.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_id NOT IN (SELECT distinct account_id FROM transactions WHERE txn_date >= date('now', '-6 months'));",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average requested amount for customers grouped by FICO ranges (Low, Medium, High).",
+      "sql": "SELECT CASE WHEN fico_score < 600 THEN 'Low' WHEN fico_score BETWEEN 600 AND 750 THEN 'Medium' ELSE 'High' END as risk_group, AVG(requested_amount) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY risk_group;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the customers with the highest total deposits (credit txns) in 2023.",
+      "sql": "SELECT c.name, SUM(t.amount) as deposits FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE t.txn_type = 'credit' AND t.txn_date LIKE '2023%' GROUP BY c.customer_id ORDER BY deposits DESC LIMIT 5;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List account types that have an average balance higher than the overall average balance.",
+      "sql": "SELECT account_type FROM accounts GROUP BY account_type HAVING AVG(balance) > (SELECT AVG(balance) FROM accounts);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find customers who have 'checking' accounts with balances higher than their 'savings' accounts.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a1 ON c.customer_id = a1.customer_id AND a1.account_type = 'checking' JOIN accounts a2 ON c.customer_id = a2.customer_id AND a2.account_type = 'savings' WHERE a1.balance > a2.balance;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the growth of total balances month over month (using created date as proxy).",
+      "sql": "SELECT strftime('%Y-%m', opened_at) as month, SUM(balance) FROM accounts GROUP BY month ORDER BY month;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have exactly 2 accounts and 1 credit application.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.customer_id HAVING COUNT(DISTINCT a.account_id) = 2 AND COUNT(DISTINCT ca.app_id) = 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average FICO score for customers who were denied credit in 2022.",
+      "sql": "SELECT AVG(c.fico_score) FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'denied' AND ca.decision_date LIKE '2022%';",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers who have transactions on the same day they opened their account.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE date(a.opened_at) = date(t.txn_date);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List the top 3 accounts with the most distinct transaction dates.",
+      "sql": "SELECT account_id FROM transactions GROUP BY account_id ORDER BY COUNT(DISTINCT txn_date) DESC LIMIT 3;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find customers with a subprime score (<600) but a balance > 10,000.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE c.fico_score < 600 GROUP BY c.customer_id HAVING SUM(a.balance) > 10000;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the average balance for accounts that have had a denied credit application associated with their owner.",
+      "sql": "SELECT AVG(a.balance) FROM accounts a WHERE a.customer_id IN (SELECT customer_id FROM credit_applications WHERE status = 'denied');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List the email addresses of customers who have duplicate names.",
+      "sql": "SELECT email FROM customers WHERE name IN (SELECT name FROM customers GROUP BY name HAVING COUNT(*) > 1);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the maximum gap in days between transactions for account 100.",
+      "sql": "SELECT MAX(julianday(t1.txn_date) - julianday(t2.txn_date)) FROM transactions t1 JOIN transactions t2 ON t1.account_id = t2.account_id WHERE t1.account_id = 100 AND t1.txn_date > t2.txn_date;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers whose latest application was approved.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.decision_date = (SELECT MAX(decision_date) FROM credit_applications WHERE customer_id = c.customer_id) AND ca.status = 'approved';",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List accounts that have never had a 'debit' transaction.",
+      "sql": "SELECT account_id FROM accounts WHERE account_id NOT IN (SELECT account_id FROM transactions WHERE txn_type = 'debit');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the customer with the highest ratio of requested amount to FICO score.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id ORDER BY (ca.requested_amount / c.fico_score) DESC LIMIT 1;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the percentage of customers with email addresses from 'gmail.com'.",
+      "sql": "SELECT (CAST(SUM(CASE WHEN email LIKE '%@gmail.com' THEN 1 ELSE 0 END) AS REAL) / COUNT(*)) * 100 FROM customers;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List all customers who have at least one account created in every year from 2020 to 2023.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE strftime('%Y', opened_at) IN ('2020','2021','2022','2023') GROUP BY c.customer_id HAVING COUNT(DISTINCT strftime('%Y', opened_at)) = 4;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the total balance of customers who have no email.",
+      "sql": "SELECT SUM(a.balance) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE c.email IS NULL;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the average FICO score of customers who have more than 10 transactions.",
+      "sql": "SELECT AVG(c.fico_score) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id HAVING COUNT(t.txn_id) > 10;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List the days with the highest total transaction volume.",
+      "sql": "SELECT txn_date, SUM(amount) FROM transactions GROUP BY txn_date ORDER BY SUM(amount) DESC LIMIT 5;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find customers who have 'savings' accounts with 0 balance.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type = 'savings' AND a.balance = 0;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the total requested amount for applications where the customer has a FICO score > 800.",
+      "sql": "SELECT SUM(ca.requested_amount) FROM credit_applications ca JOIN customers c ON ca.customer_id = c.customer_id WHERE c.fico_score > 800;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have 'credit' accounts and have made 'debit' transactions on other accounts.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE a.account_type = 'credit' AND c.customer_id IN (SELECT c2.customer_id FROM customers c2 JOIN accounts a2 ON c2.customer_id = a2.customer_id JOIN transactions t2 ON a2.account_id = t2.account_id WHERE t2.txn_type = 'debit');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Which customer has the most accounts?",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id ORDER BY COUNT(a.account_id) DESC LIMIT 1;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the names of customers who have an account balance exactly equal to 500.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.balance = 500;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the number of accounts created today.",
+      "sql": "SELECT COUNT(*) FROM accounts WHERE date(opened_at) = date('now');",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all transactions with an amount less than 10.",
+      "sql": "SELECT * FROM transactions WHERE amount < 10;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the average FICO score for customers named 'Michael'.",
+      "sql": "SELECT AVG(fico_score) FROM customers WHERE name LIKE '%Michael%';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the total number of credit applications.",
+      "sql": "SELECT COUNT(*) FROM credit_applications;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Retrieve the account ID for the account with the lowest balance.",
+      "sql": "SELECT account_id FROM accounts ORDER BY balance ASC LIMIT 1;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List customers with FICO score not equal to 750.",
+      "sql": "SELECT * FROM customers WHERE fico_score != 750;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the sum of amounts for 'debit' transactions in account 50.",
+      "sql": "SELECT SUM(amount) FROM transactions WHERE account_id = 50 AND txn_type = 'debit';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the number of transactions for each account type.",
+      "sql": "SELECT a.account_type, COUNT(t.txn_id) FROM accounts a JOIN transactions t ON a.account_id = t.account_id GROUP BY a.account_type;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have a pending application and a balance > 1000.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id JOIN accounts a ON c.customer_id = a.customer_id WHERE ca.status = 'pending' GROUP BY c.customer_id HAVING SUM(a.balance) > 1000;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the average transaction amount for customers with FICO > 700.",
+      "sql": "SELECT AVG(t.amount) FROM transactions t JOIN accounts a ON t.account_id = a.account_id JOIN customers c ON a.customer_id = c.customer_id WHERE c.fico_score > 700;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show customers who have more than 2 accounts.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id HAVING COUNT(a.account_id) > 2;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List the total balance for each account type.",
+      "sql": "SELECT account_type, SUM(balance) FROM accounts GROUP BY account_type;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the customer with the lowest average transaction amount.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id ORDER BY AVG(t.amount) ASC LIMIT 1;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the count of applications for each customer.",
+      "sql": "SELECT c.name, COUNT(ca.app_id) FROM customers c LEFT JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have transacted in the last 7 days.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id WHERE t.txn_date >= date('now', '-7 days');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the total balance of customers who have been approved for credit > 5000.",
+      "sql": "SELECT SUM(a.balance) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'approved' AND ca.requested_amount > 5000;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show customers whose FICO score is higher than the average FICO score of customers with 'credit' accounts.",
+      "sql": "SELECT name FROM customers WHERE fico_score > (SELECT AVG(c2.fico_score) FROM customers c2 JOIN accounts a2 ON c2.customer_id = a2.customer_id WHERE a2.account_type = 'credit');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List the top 5 customers with the most denied applications.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'denied' GROUP BY c.customer_id ORDER BY COUNT(ca.app_id) DESC LIMIT 5;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average balance of customers who have no transactions.",
+      "sql": "SELECT AVG(a.balance) FROM accounts a WHERE a.account_id NOT IN (SELECT distinct account_id FROM transactions);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "How many customers have a FICO score above 800?",
+      "sql": "SELECT COUNT(*) FROM customers WHERE fico_score > 800;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List all customers who have a balance of 0 in any account.",
+      "sql": "SELECT DISTINCT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.balance = 0;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show me the email addresses of customers sorted by name.",
+      "sql": "SELECT email FROM customers ORDER BY name;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the total amount of all transactions.",
+      "sql": "SELECT SUM(amount) FROM transactions;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Count the number of customers created in January 2023.",
+      "sql": "SELECT COUNT(*) FROM customers WHERE created_at LIKE '2023-01%';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "List credit applications requesting between 1000 and 5000.",
+      "sql": "SELECT * FROM credit_applications WHERE requested_amount BETWEEN 1000 AND 5000;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "What is the maximum balance in savings accounts?",
+      "sql": "SELECT MAX(balance) FROM accounts WHERE account_type = 'savings';",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Show the distinct transaction types.",
+      "sql": "SELECT DISTINCT txn_type FROM transactions;",
+      "difficulty": "simple"
+    },
+    {
+      "instruction": "Find the average balance for each customer.",
+      "sql": "SELECT c.name, AVG(a.balance) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers with more than 1 denied application.",
+      "sql": "SELECT c.name FROM customers c JOIN credit_applications ca ON c.customer_id = ca.customer_id WHERE ca.status = 'denied' GROUP BY c.customer_id HAVING COUNT(ca.app_id) > 1;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the total transaction amount for each customer.",
+      "sql": "SELECT c.name, SUM(t.amount) FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.name;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Count the number of accounts for customers with FICO < 600.",
+      "sql": "SELECT COUNT(a.account_id) FROM accounts a JOIN customers c ON a.customer_id = c.customer_id WHERE c.fico_score < 600;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have 'checking' accounts and live in the 'US' (assuming based on email domain .us).",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type = 'checking' AND c.email LIKE '%.us';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Find the customer with the highest total transaction amount.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id ORDER BY SUM(t.amount) DESC LIMIT 1;",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "Show the average requested amount for approved applications.",
+      "sql": "SELECT AVG(requested_amount) FROM credit_applications WHERE status = 'approved';",
+      "difficulty": "medium"
+    },
+    {
+      "instruction": "List customers who have transacted more than 10 times.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN transactions t ON a.account_id = t.account_id GROUP BY c.customer_id HAVING COUNT(t.txn_id) > 10;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find customers whose total balance is less than their requested credit amount.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id JOIN credit_applications ca ON c.customer_id = ca.customer_id GROUP BY c.customer_id HAVING SUM(a.balance) < MAX(ca.requested_amount);",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Show the percentage of customers with FICO > 700.",
+      "sql": "SELECT (CAST(COUNT(CASE WHEN fico_score > 700 THEN 1 END) AS REAL) / COUNT(*)) * 100 FROM customers;",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "List customers who have 'credit' accounts but no approved applications.",
+      "sql": "SELECT c.name FROM customers c JOIN accounts a ON c.customer_id = a.customer_id WHERE a.account_type = 'credit' AND c.customer_id NOT IN (SELECT customer_id FROM credit_applications WHERE status = 'approved');",
+      "difficulty": "complex"
+    },
+    {
+      "instruction": "Find the average time between application and decision.",
+      "sql": "SELECT AVG(julianday(decision_date) - julianday('now')) FROM credit_applications WHERE status != 'pending';",
+      "difficulty": "complex"
+    }
+  ]

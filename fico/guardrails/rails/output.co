@@ -1,0 +1,66 @@
+# Output Guardrails - Validate and filter LLM responses before returning to user
+# This file defines rails that run AFTER the LLM generates a response
+
+# ============================================================================
+# Forbidden Words Check - Arena Game Feature
+# ============================================================================
+
+define flow check forbidden words
+  """Check if bot response contains any forbidden words from the arena game."""
+  $has_forbidden = execute check_forbidden_words_action(text=$bot_message)
+  
+  if $has_forbidden
+    # Replace the response with a safe alternative
+    $bot_message = execute sanitize_forbidden_words_action(text=$bot_message)
+
+# ============================================================================
+# Factual Grounding Check
+# ============================================================================
+
+define flow check factual grounding
+  """Ensure the response doesn't make unverifiable claims."""
+  $has_hallucination = execute check_hallucination_action(text=$bot_message)
+  
+  if $has_hallucination
+    bot add disclaimer
+    
+define bot add disclaimer
+  "[Note: Some information may require verification. Please consult official FICO documentation or a financial professional for accuracy.]"
+
+# ============================================================================
+# System Prompt Protection
+# ============================================================================
+
+define flow check system prompt leak
+  """Prevent the bot from revealing its system instructions."""
+  $leaks_prompt = execute check_system_prompt_leak_action(text=$bot_message)
+  
+  if $leaks_prompt
+    $bot_message = "I'm a FICO assistant here to help with credit and financial questions. What would you like to know?"
+
+# ============================================================================
+# Output Formatting
+# ============================================================================
+
+define flow ensure professional tone
+  """Ensure responses maintain a professional tone."""
+  $is_unprofessional = execute check_professional_tone_action(text=$bot_message)
+  
+  if $is_unprofessional
+    $bot_message = execute make_professional_action(text=$bot_message)
+
+# ============================================================================
+# Credit Score Prediction Prevention
+# ============================================================================
+
+define flow prevent credit score prediction
+  """Prevent the bot from predicting specific credit scores."""
+  $has_prediction = execute check_credit_prediction_action(text=$bot_message)
+  
+  if $has_prediction
+    $bot_message = execute remove_credit_prediction_action(text=$bot_message)
+    bot explain no predictions
+
+define bot explain no predictions
+  "I cannot predict specific credit scores as they depend on many individual factors. For your actual score, please check with one of the major credit bureaus or use FICO's official score access programs."
+
