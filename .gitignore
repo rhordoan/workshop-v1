@@ -24,4 +24,20 @@ ENV/
 # Local caches
 .cache/
 
+artifacts/
+**/artifacts/
+**/trainer_out/
+**/checkpoint-*/
+**/runs/
+
+# Large model weight files
+**/*.safetensors
+**/*.bin
+**/*.pt
+
+# Trainer state
+**/optimizer.pt
+**/scheduler.pt
+**/trainer_state.json
+
 
