@@ -10,12 +10,39 @@ from __future__ import annotations
 import gc
 import time
 import math
+import shutil
+import tempfile
 from dataclasses import dataclass, field, asdict
 from typing import Any, Callable
 from contextlib import contextmanager
+from pathlib import Path
 
 import torch
 import numpy as np
+
+# ============================================================================
+# CRITICAL FIX: AutoGPTQ Compatibility Patch
+# ============================================================================
+# Qwen2.5 requires accessing 'attention_type' on layers during the forward pass.
+# AutoGPTQ wraps layers in a 'LayerHijacker' which hides this attribute.
+# We monkey-patch the hijacker to pass these requests through to the real layer.
+try:
+    from auto_gptq.quantization.quantizer import LayerHijacker
+    
+    # Only patch if __getattr__ isn't already defined
+    if not hasattr(LayerHijacker, '__getattr__'):
+        def getattr_patch(self, name):
+            try:
+                return getattr(self.module, name)
+            except AttributeError:
+                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        
+        LayerHijacker.__getattr__ = getattr_patch
+        print("\u2705 AutoGPTQ LayerHijacker patched for Qwen2.5 compatibility.")
+except ImportError:
+    # If auto_gptq isn't installed, we skip this (handled elsewhere)
+    pass
+# ============================================================================
 
 
 # ============================================================================
@@ -29,20 +56,6 @@ def get_gpu_memory_mb() -> float:
     return 0.0
 
 
-def get_gpu_memory_reserved_mb() -> float:
-    """Get total GPU memory reserved in MB."""
-    if torch.cuda.is_available():
-        return torch.cuda.memory_reserved() / (1024 * 1024)
-    return 0.0
-
-
-def get_gpu_memory_peak_mb() -> float:
-    """Get peak GPU memory allocated in MB."""
-    if torch.cuda.is_available():
-        return torch.cuda.max_memory_allocated() / (1024 * 1024)
-    return 0.0
-
-
 def clear_gpu_memory():
     """Clear GPU memory cache."""
     gc.collect()
@@ -51,103 +64,9 @@ def clear_gpu_memory():
         torch.cuda.reset_peak_memory_stats()
 
 
-def get_model_size_mb(model) -> float:
-    """Calculate model size in MB based on parameters."""
-    param_size = 0
-    for param in model.parameters():
-        param_size += param.nelement() * param.element_size()
-    
-    buffer_size = 0
-    for buffer in model.buffers():
-        buffer_size += buffer.nelement() * buffer.element_size()
-    
-    return (param_size + buffer_size) / (1024 * 1024)
-
-
-def count_parameters(model) -> dict:
-    """Count total and trainable parameters."""
-    total = sum(p.numel() for p in model.parameters())
-    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    
-    return {
-        "total": total,
-        "total_millions": total / 1e6,
-        "total_billions": total / 1e9,
-        "trainable": trainable,
-        "frozen": total - trainable,
-    }
-
-
-@contextmanager
-def track_memory():
-    """Context manager to track GPU memory usage."""
-    clear_gpu_memory()
-    start_mem = get_gpu_memory_mb()
-    
-    yield
-    
-    end_mem = get_gpu_memory_mb()
-    peak_mem = get_gpu_memory_peak_mb()
-    
-    print(f"Memory: {start_mem:.1f} MB -> {end_mem:.1f} MB (peak: {peak_mem:.1f} MB)")
-    print(f"Delta: +{end_mem - start_mem:.1f} MB")
-
-
 # ============================================================================
 # Perplexity Calculation
 # ============================================================================
-
-def calculate_perplexity(
-    model,
-    tokenizer,
-    text: str,
-    max_length: int = 512,
-    stride: int = 256,
-) -> float:
-    """
-    Calculate perplexity of a model on given text.
-    
-    Lower perplexity = model is more confident/accurate.
-    
-    Args:
-        model: The language model
-        tokenizer: The tokenizer
-        text: Text to evaluate
-        max_length: Maximum sequence length
-        stride: Stride for sliding window
-    
-    Returns:
-        Perplexity score (float)
-    """
-    encodings = tokenizer(text, return_tensors="pt")
-    seq_len = encodings.input_ids.size(1)
-    
-    nlls = []
-    prev_end_loc = 0
-    
-    device = next(model.parameters()).device
-    
-    for begin_loc in range(0, seq_len, stride):
-        end_loc = min(begin_loc + max_length, seq_len)
-        trg_len = end_loc - prev_end_loc
-        
-        input_ids = encodings.input_ids[:, begin_loc:end_loc].to(device)
-        target_ids = input_ids.clone()
-        target_ids[:, :-trg_len] = -100  # Mask prefix tokens
-        
-        with torch.no_grad():
-            outputs = model(input_ids, labels=target_ids)
-            neg_log_likelihood = outputs.loss
-        
-        nlls.append(neg_log_likelihood)
-        
-        prev_end_loc = end_loc
-        if end_loc == seq_len:
-            break
-    
-    ppl = torch.exp(torch.stack(nlls).mean())
-    return ppl.item()
-
 
 def calculate_perplexity_simple(
     model,
@@ -156,16 +75,9 @@ def calculate_perplexity_simple(
 ) -> float:
     """
     Simple perplexity calculation for short texts.
-    
-    Args:
-        model: The language model
-        tokenizer: The tokenizer  
-        text: Text to evaluate
-    
-    Returns:
-        Perplexity score (float)
     """
-    encodings = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    # Truncate to avoid OOM on very long texts, but keep enough for valid signal
+    encodings = tokenizer(text, return_tensors="pt", truncation=True, max_length=1024)
     input_ids = encodings.input_ids.to(next(model.parameters()).device)
     
     with torch.no_grad():
@@ -187,7 +99,6 @@ class GenerationResult:
     tokens_generated: int
     time_seconds: float
     tokens_per_second: float
-    first_token_time: float = 0.0
 
 
 def benchmark_generation(
@@ -197,24 +108,9 @@ def benchmark_generation(
     max_new_tokens: int = 50,
     num_runs: int = 3,
     warmup_runs: int = 1,
-    temperature: float = 0.7,
-    do_sample: bool = True,
 ) -> GenerationResult:
     """
     Benchmark generation speed for a prompt.
-    
-    Args:
-        model: The language model
-        tokenizer: The tokenizer
-        prompt: Input prompt
-        max_new_tokens: Maximum tokens to generate
-        num_runs: Number of benchmark runs (averaged)
-        warmup_runs: Warmup runs (not counted)
-        temperature: Sampling temperature
-        do_sample: Whether to sample (vs greedy)
-    
-    Returns:
-        GenerationResult with timing info
     """
     device = next(model.parameters()).device
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
@@ -226,12 +122,9 @@ def benchmark_generation(
             _ = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                temperature=temperature,
-                do_sample=do_sample,
                 pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             )
     
-    # Synchronize before timing
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     
@@ -241,19 +134,14 @@ def benchmark_generation(
     
     for _ in range(num_runs):
         start = time.perf_counter()
-        
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                temperature=temperature,
-                do_sample=do_sample,
                 pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             )
-        
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        
         end = time.perf_counter()
         times.append(end - start)
         final_output = outputs
@@ -262,10 +150,7 @@ def benchmark_generation(
     output_length = final_output.shape[1]
     tokens_generated = output_length - input_length
     
-    output_text = tokenizer.decode(
-        final_output[0][input_length:],
-        skip_special_tokens=True
-    )
+    output_text = tokenizer.decode(final_output[0][input_length:], skip_special_tokens=True)
     
     return GenerationResult(
         prompt=prompt,
@@ -276,415 +161,198 @@ def benchmark_generation(
     )
 
 
-def benchmark_batch(
-    model,
-    tokenizer,
-    prompts: list[str],
-    max_new_tokens: int = 50,
-    num_runs: int = 2,
-) -> list[GenerationResult]:
-    """Benchmark multiple prompts."""
-    results = []
-    for prompt in prompts:
-        result = benchmark_generation(
-            model, tokenizer, prompt,
-            max_new_tokens=max_new_tokens,
-            num_runs=num_runs,
-        )
-        results.append(result)
-    return results
-
-
 # ============================================================================
-# Model Loading with Timing
+# Model Loading Logic
 # ============================================================================
 
 @dataclass
 class ModelLoadResult:
-    """Result from loading a model."""
     name: str
     precision: str
     load_time_seconds: float
     memory_mb: float
-    peak_memory_mb: float
     model: Any = field(repr=False)
     tokenizer: Any = field(repr=False)
-    
-    def to_dict(self) -> dict:
-        return {
-            "name": self.name,
-            "precision": self.precision,
-            "load_time_seconds": self.load_time_seconds,
-            "memory_mb": self.memory_mb,
-            "peak_memory_mb": self.peak_memory_mb,
-        }
 
 
-def load_model_fp16(model_name: str, trust_remote_code: bool = True) -> ModelLoadResult:
-    """Load model in FP16 precision."""
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    
+def load_model_base(model_name, precision_name, load_func, **kwargs):
+    """Generic loader wrapper to handle timing and memory."""
     clear_gpu_memory()
-    
     start_time = time.perf_counter()
     start_mem = get_gpu_memory_mb()
     
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name,
-        trust_remote_code=trust_remote_code,
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=torch.float16,
-        device_map="auto",
-        trust_remote_code=trust_remote_code,
-    )
-    model.eval()
+    model, tokenizer = load_func(model_name, **kwargs)
     
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    
+        
     end_time = time.perf_counter()
     end_mem = get_gpu_memory_mb()
-    peak_mem = get_gpu_memory_peak_mb()
     
     return ModelLoadResult(
         name=model_name,
-        precision="FP16",
+        precision=precision_name,
         load_time_seconds=end_time - start_time,
         memory_mb=end_mem - start_mem,
-        peak_memory_mb=peak_mem,
         model=model,
         tokenizer=tokenizer,
     )
 
-
-def load_model_int8(model_name: str, trust_remote_code: bool = True) -> ModelLoadResult:
-    """Load model in INT8 precision using bitsandbytes."""
+def _load_fp16(model_name):
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    
-    clear_gpu_memory()
-    
-    start_time = time.perf_counter()
-    start_mem = get_gpu_memory_mb()
-    
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name,
-        trust_remote_code=trust_remote_code,
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        load_in_8bit=True,
-        device_map="auto",
-        trust_remote_code=trust_remote_code,
+        model_name, 
+        torch_dtype=torch.float16, 
+        device_map="auto"
     )
-    model.eval()
-    
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
-    
-    end_time = time.perf_counter()
-    end_mem = get_gpu_memory_mb()
-    peak_mem = get_gpu_memory_peak_mb()
-    
-    return ModelLoadResult(
-        name=model_name,
-        precision="INT8",
-        load_time_seconds=end_time - start_time,
-        memory_mb=end_mem - start_mem,
-        peak_memory_mb=peak_mem,
-        model=model,
-        tokenizer=tokenizer,
+    return model, tokenizer
+
+def _load_int8(model_name):
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name, 
+        load_in_8bit=True, 
+        device_map="auto"
     )
+    return model, tokenizer
 
-
-def load_model_int4(
-    model_name: str,
-    quant_type: str = "nf4",
-    trust_remote_code: bool = True,
-) -> ModelLoadResult:
-    """
-    Load model in INT4 precision using bitsandbytes.
-    
-    Args:
-        model_name: HuggingFace model name
-        quant_type: "nf4" (normalized float) or "fp4"
-        trust_remote_code: Trust remote code for model loading
-    """
+def _load_int4(model_name, quant_type="nf4"):
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-    
-    clear_gpu_memory()
-    
-    start_time = time.perf_counter()
-    start_mem = get_gpu_memory_mb()
-    
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name,
-        trust_remote_code=trust_remote_code,
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type=quant_type,
         bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,  # Nested quantization
+        bnb_4bit_use_double_quant=True,
     )
-    
     model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        quantization_config=bnb_config,
-        device_map="auto",
-        trust_remote_code=trust_remote_code,
+        model_name, 
+        quantization_config=bnb_config, 
+        device_map="auto"
     )
-    model.eval()
+    return model, tokenizer
+
+def _load_gptq(model_name, calibration_text, bits):
+    from transformers import AutoTokenizer
+    from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
     
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        
+    # Prepare calibration data
+    calibration_examples = [
+        tokenizer(chunk, return_tensors="pt", truncation=True, max_length=512)
+        for chunk in [calibration_text[i:i+512] for i in range(0, len(calibration_text), 512)]
+    ]
+    # AutoGPTQ expects a list of dicts with 'input_ids' and 'attention_mask'
+    examples = [{"input_ids": c.input_ids, "attention_mask": c.attention_mask} for c in calibration_examples]
+
+    # Quantize
+    quantize_config = BaseQuantizeConfig(bits=bits, group_size=128, desc_act=False)
     
-    end_time = time.perf_counter()
-    end_mem = get_gpu_memory_mb()
-    peak_mem = get_gpu_memory_peak_mb()
+    # Load model to CPU/GPU first for quantization
+    model = AutoGPTQForCausalLM.from_pretrained(model_name, quantize_config, device_map="auto")
     
-    return ModelLoadResult(
-        name=model_name,
-        precision=f"INT4-{quant_type.upper()}",
-        load_time_seconds=end_time - start_time,
-        memory_mb=end_mem - start_mem,
-        peak_memory_mb=peak_mem,
-        model=model,
-        tokenizer=tokenizer,
-    )
+    # Run Calibration
+    model.quantize(examples)
+    
+    # Save to temp and reload (crucial for AutoGPTQ to use optimized kernels)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        save_dir = Path(tmp_dir) / f"gptq_int{bits}"
+        model.save_quantized(save_dir, use_safetensors=True)
+        tokenizer.save_pretrained(save_dir)
+        del model
+        clear_gpu_memory()
+        
+        # Reload the optimized model
+        model = AutoGPTQForCausalLM.from_quantized(
+            save_dir, 
+            device="cuda:0", 
+            use_safetensors=True, 
+            disable_exllama=False
+        )
+    return model, tokenizer
+
+# Public Loaders
+def load_model_fp16(name): return load_model_base(name, "FP16", _load_fp16)
+def load_model_int8(name): return load_model_base(name, "INT8", _load_int8)
+def load_model_int4(name, quant_type="nf4"): return load_model_base(name, f"INT4-{quant_type.upper()}", _load_int4, quant_type=quant_type)
+def quantize_and_load_gptq(name, text, bits=4): return load_model_base(name, f"GPTQ-INT{bits}", _load_gptq, calibration_text=text, bits=bits)
 
 
 # ============================================================================
-# Comparison & Visualization Helpers
+# Benchmarking & Visualization
 # ============================================================================
 
 @dataclass
 class QuantizationBenchmark:
-    """Complete benchmark results for a quantization level."""
     precision: str
     bits_per_weight: float
     memory_mb: float
     load_time_s: float
     perplexity: float
     tokens_per_second: float
-    sample_outputs: dict = field(default_factory=dict)
     
     def to_dict(self) -> dict:
         return asdict(self)
 
-
-def compare_outputs(
-    models: dict[str, tuple],  # {precision: (model, tokenizer)}
-    prompt: str,
-    max_new_tokens: int = 100,
-    temperature: float = 0.7,
-) -> dict[str, str]:
-    """
-    Generate outputs from multiple models for comparison.
-    
-    Args:
-        models: Dict mapping precision name to (model, tokenizer) tuple
-        prompt: Input prompt
-        max_new_tokens: Max tokens to generate
-        temperature: Sampling temperature
-    
-    Returns:
-        Dict mapping precision name to generated output
-    """
-    outputs = {}
-    
-    for precision, (model, tokenizer) in models.items():
-        device = next(model.parameters()).device
-        inputs = tokenizer(prompt, return_tensors="pt").to(device)
-        
-        with torch.no_grad():
-            generated = model.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                temperature=temperature,
-                do_sample=True,
-                pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
-            )
-        
-        output_text = tokenizer.decode(
-            generated[0][inputs.input_ids.shape[1]:],
-            skip_special_tokens=True
-        )
-        outputs[precision] = output_text
-    
-    return outputs
-
-
-def format_comparison_table(benchmarks: list[QuantizationBenchmark]) -> str:
-    """Format benchmark results as a nice table."""
-    header = (
-        "┌────────────┬───────┬──────────┬──────────┬────────────┬───────────┐\n"
-        "│ Precision  │ Bits  │ Memory   │ Load(s)  │ Perplexity │ Tok/s     │\n"
-        "├────────────┼───────┼──────────┼──────────┼────────────┼───────────┤"
-    )
-    
-    rows = []
-    for b in benchmarks:
-        row = (
-            f"│ {b.precision:<10} │ {b.bits_per_weight:>5.1f} │ "
-            f"{b.memory_mb:>7.1f}MB │ {b.load_time_s:>7.2f}s │ "
-            f"{b.perplexity:>10.2f} │ {b.tokens_per_second:>8.1f} │"
-        )
-        rows.append(row)
-    
-    footer = "└────────────┴───────┴──────────┴──────────┴────────────┴───────────┘"
-    
-    return header + "\n" + "\n".join(rows) + "\n" + footer
-
-
-# ============================================================================
-# Visualization Functions (for Plotly)
-# ============================================================================
-
-def create_memory_chart(benchmarks: list[QuantizationBenchmark]):
-    """Create a bar chart comparing memory usage."""
-    import plotly.express as px
-    import pandas as pd
-    
-    df = pd.DataFrame([b.to_dict() for b in benchmarks])
-    
-    fig = px.bar(
-        df,
-        x="precision",
-        y="memory_mb",
-        title="GPU Memory Usage by Quantization Level",
-        labels={"memory_mb": "Memory (MB)", "precision": "Precision"},
-        text="memory_mb",
-    )
-    fig.update_traces(texttemplate="%{text:.0f} MB", textposition="outside")
-    fig.update_layout(showlegend=False)
-    
-    return fig
-
-
-def create_speed_chart(benchmarks: list[QuantizationBenchmark]):
-    """Create a bar chart comparing generation speed."""
-    import plotly.express as px
-    import pandas as pd
-    
-    df = pd.DataFrame([b.to_dict() for b in benchmarks])
-    
-    fig = px.bar(
-        df,
-        x="precision",
-        y="tokens_per_second",
-        title="Generation Speed by Quantization Level",
-        labels={"tokens_per_second": "Tokens/Second", "precision": "Precision"},
-        text="tokens_per_second",
-    )
-    fig.update_traces(texttemplate="%{text:.1f}", textposition="outside")
-    fig.update_layout(showlegend=False)
-    
-    return fig
-
-
-def create_perplexity_chart(benchmarks: list[QuantizationBenchmark]):
-    """Create a line chart showing perplexity vs bits per weight."""
-    import plotly.express as px
-    import pandas as pd
-    
-    df = pd.DataFrame([b.to_dict() for b in benchmarks])
-    df = df.sort_values("bits_per_weight", ascending=False)
-    
-    fig = px.line(
-        df,
-        x="bits_per_weight",
-        y="perplexity",
-        title="Perplexity vs Bits per Weight (Lower is Better)",
-        labels={"bits_per_weight": "Bits per Weight", "perplexity": "Perplexity"},
-        markers=True,
-    )
-    fig.update_xaxes(autorange="reversed")  # Higher bits on left
-    
-    return fig
-
-
-def create_tradeoff_chart(benchmarks: list[QuantizationBenchmark]):
-    """Create a scatter plot showing speed vs quality tradeoff."""
-    import plotly.express as px
-    import pandas as pd
-    
-    df = pd.DataFrame([b.to_dict() for b in benchmarks])
-    
-    fig = px.scatter(
-        df,
-        x="tokens_per_second",
-        y="perplexity",
-        size="memory_mb",
-        color="precision",
-        title="Speed vs Quality Tradeoff (bubble size = memory)",
-        labels={
-            "tokens_per_second": "Speed (tokens/sec)",
-            "perplexity": "Perplexity (lower is better)",
-        },
-        hover_data=["memory_mb"],
-    )
-    
-    # Add annotations
-    for _, row in df.iterrows():
-        fig.add_annotation(
-            x=row["tokens_per_second"],
-            y=row["perplexity"],
-            text=row["precision"],
-            showarrow=False,
-            yshift=20,
-        )
-    
-    return fig
-
-
 def create_summary_dashboard(benchmarks: list[QuantizationBenchmark]):
-    """Create a summary dashboard with all charts."""
+    """Create a beautiful Plotly dashboard summary."""
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
     import pandas as pd
     
     df = pd.DataFrame([b.to_dict() for b in benchmarks])
     
+    # Colors for different precisions
+    colors = {
+        'FP16': '#636EFA', 
+        'INT8': '#EF553B', 
+        'INT4-NF4': '#00CC96', 
+        'INT4-FP4': '#AB63FA', 
+        'GPTQ-INT4': '#FFA15A', 
+        'GPTQ-INT2': '#19D3F3'
+    }
+    
     fig = make_subplots(
         rows=2, cols=2,
         subplot_titles=(
-            "Memory Usage (MB)",
-            "Generation Speed (tok/s)",
-            "Perplexity (lower is better)",
-            "Speed vs Quality Tradeoff"
+            "<b>GPU Memory Usage</b> (Lower is Better)",
+            "<b>Inference Speed</b> (Higher is Better)",
+            "<b>Perplexity / Error</b> (Lower is Better)",
+            "<b>Speed vs Quality Tradeoff</b>"
         ),
+        vertical_spacing=0.15,
+        horizontal_spacing=0.1
     )
     
-    # Memory bar
+    # 1. Memory Usage
     fig.add_trace(
-        go.Bar(x=df["precision"], y=df["memory_mb"], name="Memory"),
+        go.Bar(x=df["precision"], y=df["memory_mb"], marker_color=[colors.get(p, '#888') for p in df["precision"]], text=df["memory_mb"], texttemplate="%{text:.0f} MB", textposition="auto", name="Memory"),
         row=1, col=1
     )
     
-    # Speed bar
+    # 2. Inference Speed
     fig.add_trace(
-        go.Bar(x=df["precision"], y=df["tokens_per_second"], name="Speed"),
+        go.Bar(x=df["precision"], y=df["tokens_per_second"], marker_color=[colors.get(p, '#888') for p in df["precision"]], text=df["tokens_per_second"], texttemplate="%{text:.1f} t/s", textposition="auto", name="Speed"),
         row=1, col=2
     )
     
-    # Perplexity bar
+    # 3. Perplexity (Log Scale handling for INT2)
     fig.add_trace(
-        go.Bar(x=df["precision"], y=df["perplexity"], name="Perplexity"),
+        go.Bar(x=df["precision"], y=df["perplexity"], marker_color=[colors.get(p, '#888') for p in df["precision"]], text=df["perplexity"], texttemplate="%{text:.2f}", textposition="outside", name="Perplexity"),
         row=2, col=1
     )
-    
-    # Tradeoff scatter
+    # If INT2 perplexity is huge (>100), use log scale
+    if df["perplexity"].max() > 100:
+        fig.update_yaxes(type="log", row=2, col=1, title="Perplexity (Log Scale)")
+    else:
+        fig.update_yaxes(title="Perplexity", row=2, col=1)
+
+    # 4. Tradeoff Scatter
     fig.add_trace(
         go.Scatter(
             x=df["tokens_per_second"],
@@ -692,17 +360,13 @@ def create_summary_dashboard(benchmarks: list[QuantizationBenchmark]):
             mode="markers+text",
             text=df["precision"],
             textposition="top center",
-            marker=dict(size=df["memory_mb"] / 50),
+            marker=dict(size=df["memory_mb"]/50, color=[colors.get(p, '#888') for p in df["precision"]], line=dict(width=2, color='DarkSlateGrey')),
             name="Tradeoff"
         ),
         row=2, col=2
     )
-    
-    fig.update_layout(
-        height=800,
-        title_text="Quantization Benchmark Summary",
-        showlegend=False,
-    )
-    
-    return fig
+    fig.update_yaxes(title="Perplexity (Lower = Better)", row=2, col=2)
+    fig.update_xaxes(title="Tokens / Sec (Higher = Better)", row=2, col=2)
 
+    fig.update_layout(height=900, title_text="<b>Quantization Benchmark: Full Precision vs INT8 vs INT4 vs INT2</b>", showlegend=False, template="plotly_white")
+    return fig
