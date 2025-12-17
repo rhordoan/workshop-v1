@@ -32,7 +32,7 @@ Open the notebooks:
 
 Module C can run in **local** mode or **NIM** mode.
 
-To start local NIM containers + an nginx gateway on `http://localhost:8000`:
+To start local NIM containers + an nginx gateway on `http://localhost:8000` (embed + rerank + chat):
 
 ```bash
 cd fico

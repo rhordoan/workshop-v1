@@ -1,75 +1,46 @@
-## NIM deployment (for `day2_02_module_c_rag_arch_latency_profiler.ipynb`)
+## Local LLM deployment (recommended): Ollama
 
-The notebook's `NIMClient` expects these endpoints on a single base URL:
+This repo is configured to use a **local Ollama server** (OpenAI-compatible) for chat/completions.
 
-- `POST /v1/embeddings`
-- `POST /v1/rerank`
-- `POST /v1/chat/completions`
+### Endpoint
 
-By default it uses `NIM_BASE_URL=http://localhost:8000`.
+- **Base URL**: `http://localhost:11434`
+- **Chat**: `POST /v1/chat/completions`
+- **Model** (default): `llama3.1:8b`
 
-This repo includes scripts that start **3 NIM containers** (embed + rerank + chat) and an **nginx gateway** that routes the paths above to the correct backend containers.
-
-### Prereqs
-
-- **Docker** working (and your user in the `docker` group)
-- **NVIDIA GPU** + NVIDIA container runtime working (so `docker run --gpus all ...` works)
-- **NGC API key** (for pulling images from `nvcr.io`)
-
-### 1) Export your NGC API key
-
-Get it from NGC, then:
+### Quick verify (curl)
 
 ```bash
-export NGC_API_KEY="..."
+curl -X POST http://localhost:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "llama3.1:8b",
+        "messages": [{"role":"user","content":"Hello!"}],
+        "max_tokens": 64,
+        "temperature": 0.0
+      }'
 ```
 
-### 2) Start NIMs
+### Start
 
 From `fico/`:
 
 ```bash
-chmod +x scripts/start_nims.sh scripts/stop_nims.sh
-./scripts/start_nims.sh
+chmod +x scripts/start_ollama.sh scripts/stop_ollama.sh
+./scripts/start_ollama.sh
 ```
 
-This will expose the gateway on `http://localhost:8000`.
-
-### 3) (Optional) Override images/models
-
-The default models match `fico/nim_clients.py` defaults:
-
-- `NIM_EMBED_MODEL`: `nvidia/llama-3.1-nemotron-embedding`
-- `NIM_RERANK_MODEL`: `nvidia/llama-3.2-nemoretriever-500m-rerank-v2`
-- `NIM_GEN_MODEL`: `qwen/qwen-2.5-7b-instruct`
-
-If your NIM images/tags differ, override these before starting:
+### Stop
 
 ```bash
-export NIM_EMBED_IMAGE="..."
-export NIM_RERANK_IMAGE="..."
-export NIM_GEN_IMAGE="..."
-export NIM_CACHE_DIR="$HOME/.cache/nim"
+./scripts/stop_ollama.sh
 ```
 
-### 4) Verify quickly
+### Notes
 
-Once containers are up, the notebook should be able to hit `/v1/embeddings` without `Connection refused`.
-
-If anything fails, check logs:
-
-```bash
-docker logs -f nim-embed
-docker logs -f nim-rerank
-docker logs -f nim-gen
-docker logs -f nim-gateway
-```
-
-### 5) Stop
-
-```bash
-./scripts/stop_nims.sh
-```
+- Some notebooks still use env var names like `NIM_BASE_URL` / `NIM_GEN_MODEL` for compatibility; point them at Ollama:
+  - `NIM_BASE_URL=http://localhost:11434`
+  - `NIM_GEN_MODEL=llama3.1:8b`
 
 
 

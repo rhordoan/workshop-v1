@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Starts the 3 services expected by this repo's notebook client:
-#   - POST /v1/embeddings
-#   - POST /v1/rerank
-#   - POST /v1/chat/completions
+# NOTE: This script is legacy. The workshop now defaults to local Ollama instead:
+#   ./scripts/start_ollama.sh
 #
-# It runs three NIM containers (one per capability) and a small nginx gateway
+# Starts NIM services. Defaults are set to the simplest path: chat-only.
+#   - POST /v1/chat/completions (default)
+#   - POST /v1/embeddings (if START_EMBED=1)
+#   - POST /v1/rerank (if START_RERANK=1)
+#
+# It can run up to three NIM containers (one per capability) plus a small nginx gateway
 # on http://localhost:8000 that routes each path to the correct backend.
 #
 # Requirements:
@@ -21,17 +24,22 @@ set -euo pipefail
 # Optional overrides:
 #   export NIM_EMBED_IMAGE="nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1"
 #   export NIM_RERANK_IMAGE="nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2"
-#   export NIM_GEN_IMAGE="nvcr.io/nim/ibm-granite/granite-3.3-8b-instruct:1.8.4"
+#   export NIM_GEN_IMAGE="nvcr.io/nim/qwen/qwen2.5-7b-instruct:1.0.0"
 #   export NIM_EMBED_MODEL="nvidia/nv-embedqa-mistral-7b-v2"
 #   export NIM_RERANK_MODEL="nvidia/nv-rerankqa-mistral-4b-v3"
-#   export NIM_GEN_MODEL="ibm-granite/granite-3.3-8b-instruct"
+#   export NIM_GEN_MODEL="qwen/qwen2.5-7b-instruct"
 #   # Cap chat model context length (reduces KV-cache allocation, prevents OOM).
-#   # Default is 20000 tokens for workshops. Set to 0/empty to let the NIM profile decide.
-#   export NIM_MAX_MODEL_LEN=20000
+#   # Default is 4096 tokens for workshops. Set to 0/empty to let the NIM profile decide.
+#   export NIM_MAX_MODEL_LEN=4096
+#   # Cap how much GPU memory the chat NIM reserves for KV cache.
+#   # Doc default is 0.9; pin to 0.3 for multi-service workshops.
+#   export NIM_GPU_MEMORY_UTILIZATION=0.3
+#   # Cap concurrent sequences (reduces KV cache footprint at startup).
+#   export NIM_MAX_NUM_SEQS=32
 #   export NIM_CACHE_DIR="$HOME/.cache/nim"
 #   export START_EMBED=1
 #   export START_RERANK=1
-#   export START_GEN=0
+#   export START_GEN=1
 #   # Convenience for eval notebooks that only need a chat/judge model:
 #   export START_JUDGE_ONLY=1  # implies START_EMBED=0 START_RERANK=0 START_GEN=1
 #
@@ -60,22 +68,30 @@ fi
 
 NIM_EMBED_IMAGE="${NIM_EMBED_IMAGE:-nvcr.io/nim/nvidia/nv-embedqa-mistral-7b-v2:1.0.1}"
 NIM_RERANK_IMAGE="${NIM_RERANK_IMAGE:-nvcr.io/nim/nvidia/nv-rerankqa-mistral-4b-v3:1.0.2}"
-NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/ibm-granite/granite-3.3-8b-instruct:1.8.4}"
+# Default chat NIM: Qwen 2.5 7B instruct.
+NIM_GEN_IMAGE="${NIM_GEN_IMAGE:-nvcr.io/nim/qwen/qwen2.5-7b-instruct:1.0.0}"
 
 NIM_EMBED_MODEL="${NIM_EMBED_MODEL:-nvidia/nv-embedqa-mistral-7b-v2}"
 NIM_RERANK_MODEL="${NIM_RERANK_MODEL:-nvidia/nv-rerankqa-mistral-4b-v3}"
-NIM_GEN_MODEL="${NIM_GEN_MODEL:-ibm-granite/granite-3.3-8b-instruct}"
+NIM_GEN_MODEL="${NIM_GEN_MODEL:-qwen/qwen2.5-7b-instruct}"
 
 # IMPORTANT: many chat NIM profiles default to very large max context lengths (e.g., 131k),
 # which can trigger huge KV-cache allocations and OOM even on large GPUs if other services
 # are sharing the card. For workshop stability, we cap by default.
-NIM_MAX_MODEL_LEN="${NIM_MAX_MODEL_LEN:-20000}"
+NIM_MAX_MODEL_LEN="${NIM_MAX_MODEL_LEN:-4096}"
+# Tighter KV cache footprint; lower this if sharing GPUs.
+NIM_GPU_MEMORY_UTILIZATION="${NIM_GPU_MEMORY_UTILIZATION:-0.3}"
+NIM_MAX_NUM_SEQS="${NIM_MAX_NUM_SEQS:-32}"
+# Some NIM builds look for a KV cache percentage env; mirror the utilization
+# value so the default 0.9 allocation is clamped to 0.3 per docs.
+NIM_KV_CACHE_PERCENT="${NIM_KV_CACHE_PERCENT:-${NIM_GPU_MEMORY_UTILIZATION}}"
+NIM_CACHE_SALT="${NIM_CACHE_SALT:-}"
+# Force leaner vLLM defaults when supported by the image.
+NIM_OVERRIDE_ENGINE_ARGS="${NIM_OVERRIDE_ENGINE_ARGS:-{\"gpu_memory_utilization\":${NIM_GPU_MEMORY_UTILIZATION},\"kv_cache_gpu_memory_utilization\":${NIM_GPU_MEMORY_UTILIZATION},\"max_num_seqs\":${NIM_MAX_NUM_SEQS}}}"
 
 START_EMBED="${START_EMBED:-1}"
 START_RERANK="${START_RERANK:-1}"
-# IMPORTANT: Most workshop VMs (even A100 80GB) cannot co-run a heavy chat NIM plus
-# the embedding + rerank NIMs with TensorRT profiles simultaneously without OOM.
-# Start chat separately when needed.
+# Run only chat by default; enable embed/rerank if you need them and have headroom.
 START_GEN="${START_GEN:-0}"
 
 # Convenience: for RAG eval notebooks, we often only need a chat model for judging.
@@ -225,6 +241,11 @@ if [[ "${START_GEN}" == "1" ]]; then
     -e "NIM_MODEL=${NIM_GEN_MODEL}" \
     -e "MODEL_NAME=${NIM_GEN_MODEL}" \
     -e "NIM_MAX_MODEL_LEN=${NIM_MAX_MODEL_LEN}" \
+    -e "NIM_GPU_MEMORY_UTILIZATION=${NIM_GPU_MEMORY_UTILIZATION}" \
+    -e "NIM_KV_CACHE_PERCENT=${NIM_KV_CACHE_PERCENT}" \
+    -e "NIM_OVERRIDE_ENGINE_ARGS=${NIM_OVERRIDE_ENGINE_ARGS}" \
+    -e "NIM_CACHE_SALT=${NIM_CACHE_SALT}" \
+    -e "NIM_MAX_NUM_SEQS=${NIM_MAX_NUM_SEQS}" \
     "${NIM_GEN_IMAGE}" >/dev/null
   # Chat NIM can take longer (engine build / profile selection).
   wait_ready "${GEN_NAME}" "http://${GEN_NAME}:8000/v1/health/ready" "${NIM_WAIT_TIMEOUT_S:-1200}" "${NIM_WAIT_POLL_S:-3}" || {
@@ -327,7 +348,7 @@ cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_TAIL'
 }
 NGINX_TAIL
 
-echo "==> Start nginx gateway on localhost:8000"
+echo "==> Start nginx gateway on http://localhost:8000"
 docker run --detach --restart unless-stopped --name "${GATEWAY_NAME}" \
   --network "${NETWORK}" \
   -p 8000:8000 \

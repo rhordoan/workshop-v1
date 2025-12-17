@@ -7,6 +7,15 @@ scikit-learn>=1.3
 nbformat>=5.10
 jupyterlab>=4.0
 
+# Notebook visuals + GPU introspection (Inference Cockpit)
+matplotlib>=3.7
+# Provides the `pynvml` import (NVML bindings) via the maintained package name.
+nvidia-ml-py>=12.0.0
+
+# Day 2 vector arithmetic demos (king - man + woman)
+gensim>=4.3.2
+scipy>=1.10
+
 # ---- GPU text generation + embeddings (optional but recommended) ----
 # NOTE: For A100/CUDA, install the CUDA-enabled PyTorch wheel that matches your system.
 # See: https://pytorch.org/get-started/locally/
@@ -17,6 +26,10 @@ peft>=0.12
 sentence-transformers>=3.0
 tqdm>=4.66
 jinja2>=3.1.0
+
+# vLLM is optional and environment-sensitive (CUDA wheels, driver/toolkit matching).
+# Install separately if desired:
+#   python -m pip install -U vllm
 
 # Module C: real RAG pipeline + NIM calls + eval
 requests>=2.31
@@ -34,6 +47,7 @@ opentelemetry-exporter-otlp-proto-http>=1.26
 opentelemetry-instrumentation>=0.47b0
 opentelemetry-instrumentation-requests>=0.47b0
 opentelemetry-semantic-conventions>=0.47b0
+
 
 # Module D: Guardrails Arena
 nemoguardrails>=0.10
