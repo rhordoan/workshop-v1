@@ -22,14 +22,17 @@ class NIMConfig:
     """
 
     base_url: str = os.environ.get("NIM_BASE_URL", "http://localhost:8000")
+    embed_base_url: str = os.environ.get("NIM_EMBED_BASE_URL", base_url)
+    rerank_base_url: str = os.environ.get("NIM_RERANK_BASE_URL", base_url)
+    chat_base_url: str = os.environ.get("NIM_CHAT_BASE_URL", "http://localhost:11434")
     timeout_s: float = 60.0
 
     # Model ids as expected by the NIM server
     #
-    # Defaults are aligned to the repo's `scripts/start_nims.sh` (override freely).
+    # Defaults are aligned to the repo's local Ollama setup (`scripts/start_ollama.sh`).
     embed_model: str = os.environ.get("NIM_EMBED_MODEL", "nvidia/nv-embedqa-mistral-7b-v2")
     rerank_model: str = os.environ.get("NIM_RERANK_MODEL", "nvidia/nv-rerankqa-mistral-4b-v3")
-    gen_model: str = os.environ.get("NIM_GEN_MODEL", "qwen/qwen-2.5-7b-instruct")
+    gen_model: str = os.environ.get("NIM_GEN_MODEL", "llama3.1:8b")
 
     # Endpoints (customizable)
     embeddings_path: str = os.environ.get("NIM_EMBED_PATH", "/v1/embeddings")
@@ -51,8 +54,8 @@ class NIMClient:
             h["Authorization"] = f"Bearer {self.cfg.api_key}"
         return h
 
-    def _url(self, path: str) -> str:
-        return self.cfg.base_url.rstrip("/") + "/" + path.lstrip("/")
+    def _url(self, base_url: str, path: str) -> str:
+        return base_url.rstrip("/") + "/" + path.lstrip("/")
 
     def embed(self, texts: list[str], input_type: str = "query") -> tuple[list[list[float]], float]:
         """
@@ -70,7 +73,12 @@ class NIMClient:
         if embed_requires_input_type:
             payload["input_type"] = input_type
         t0 = now_s()
-        r = requests.post(self._url(self.cfg.embeddings_path), headers=self._headers(), json=payload, timeout=self.cfg.timeout_s)
+        r = requests.post(
+            self._url(self.cfg.embed_base_url, self.cfg.embeddings_path),
+            headers=self._headers(),
+            json=payload,
+            timeout=self.cfg.timeout_s,
+        )
         dt = now_s() - t0
         r.raise_for_status()
         j = r.json()
@@ -119,7 +127,12 @@ class NIMClient:
         else:
             payload = {"model": self.cfg.rerank_model, "query": query, "documents": documents, "top_n": int(top_n)}
         t0 = now_s()
-        r = requests.post(self._url(self.cfg.rerank_path), headers=self._headers(), json=payload, timeout=self.cfg.timeout_s)
+        r = requests.post(
+            self._url(self.cfg.rerank_base_url, self.cfg.rerank_path),
+            headers=self._headers(),
+            json=payload,
+            timeout=self.cfg.timeout_s,
+        )
         dt = now_s() - t0
         r.raise_for_status()
         j = r.json()
@@ -159,7 +172,12 @@ class NIMClient:
             "temperature": float(temperature),
         }
         t0 = now_s()
-        r = requests.post(self._url(self.cfg.chat_path), headers=self._headers(), json=payload, timeout=self.cfg.timeout_s)
+        r = requests.post(
+            self._url(self.cfg.chat_base_url, self.cfg.chat_path),
+            headers=self._headers(),
+            json=payload,
+            timeout=self.cfg.timeout_s,
+        )
         dt = now_s() - t0
         r.raise_for_status()
         j = r.json()
