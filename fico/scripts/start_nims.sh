@@ -29,6 +29,8 @@ set -euo pipefail
 #   export START_EMBED=1
 #   export START_RERANK=1
 #   export START_GEN=0
+#   # Convenience for eval notebooks that only need a chat/judge model:
+#   export START_JUDGE_ONLY=1  # implies START_EMBED=0 START_RERANK=0 START_GEN=1
 #
 # Notes:
 # - Image names/tags vary by NIM release. If pulls fail, look up the exact
@@ -65,6 +67,14 @@ START_RERANK="${START_RERANK:-1}"
 # the embedding + rerank NIMs with TensorRT profiles simultaneously without OOM.
 # Start chat separately when needed.
 START_GEN="${START_GEN:-0}"
+
+# Convenience: for RAG eval notebooks, we often only need a chat model for judging.
+START_JUDGE_ONLY="${START_JUDGE_ONLY:-0}"
+if [[ "${START_JUDGE_ONLY}" == "1" ]]; then
+  START_EMBED="0"
+  START_RERANK="0"
+  START_GEN="1"
+fi
 
 NIM_CACHE_DIR="${NIM_CACHE_DIR:-$HOME/.cache/nim}"
 mkdir -p "${NIM_CACHE_DIR}"
@@ -169,14 +179,28 @@ http {
 
   server {
     listen 8000;
+NGINX_HEAD
 
+if [[ "${START_EMBED}" == "1" ]]; then
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_EMBED'
     # Embeddings
     location /v1/embeddings {
       proxy_pass http://nim-embed:8000;
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
+NGINX_EMBED
+else
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_EMBED_OFF'
+    # Embeddings (disabled)
+    location /v1/embeddings {
+      return 503;
+    }
+NGINX_EMBED_OFF
+fi
 
+if [[ "${START_RERANK}" == "1" ]]; then
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_RERANK'
     # Rerank
     location /v1/rerank {
       # nv-rerank* NIMs commonly expose /v1/ranking. We map our stable /v1/rerank
@@ -192,8 +216,14 @@ http {
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
-
-NGINX_HEAD
+NGINX_RERANK
+else
+  cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_RERANK_OFF'
+    # Rerank (disabled)
+    location /v1/rerank { return 503; }
+    location /v1/ranking { return 503; }
+NGINX_RERANK_OFF
+fi
 
 if [[ "${START_GEN}" == "1" ]]; then
   cat >> "${GATEWAY_CONF_DIR}/nginx.conf" <<'NGINX_CHAT'
@@ -237,9 +267,9 @@ cat <<EOF
 ✅ NIM gateway is up (routing via nginx): http://localhost:8000
 
 Check logs:
-  docker logs -f ${EMBED_NAME}
-  docker logs -f ${RERANK_NAME}
-  docker logs -f ${GEN_NAME}
+  docker logs -f ${EMBED_NAME}   # if START_EMBED=1
+  docker logs -f ${RERANK_NAME}  # if START_RERANK=1
+  docker logs -f ${GEN_NAME}     # if START_GEN=1
   docker logs -f ${GATEWAY_NAME}
 
 To stop everything:
